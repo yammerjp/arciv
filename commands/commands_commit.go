@@ -25,6 +25,20 @@ func commitCommand(cmd *cobra.Command, args []string) {
 	}
 }
 
+func init() {
+	RootCmd.AddCommand(commitCmd)
+}
+
+type File struct {
+	Path      string
+	Sha256    []byte
+	Timestamp int64
+}
+
+func (file File) toString() string {
+	return hex.EncodeToString(file.Sha256) + " " + fmt.Sprintf("%.8x", file.Timestamp) + " " + file.Path
+}
+
 func commitAction() (err error) {
 	// fetch root dir
 	rootDir, err := findRoot()
@@ -32,28 +46,22 @@ func commitAction() (err error) {
 		return err
 	}
 	// fetch file paths
-	paths, err := fullFileList(rootDir)
+	paths, err := findPaths(rootDir)
 	if err != nil {
 		return err
 	}
-	// sha256sums
+	var files []File
 	for _, path := range paths {
-		sha256, err := fileSha256sum(path)
+		file, err := readFile(path)
 		if err != nil {
 			return err
 		}
-		// unix timestamp
-		modifiedTime, err := fileModified(path)
-		if err != nil {
-			return err
-		}
-		fmt.Println(sha256 + " " + modifiedTime + " " + path)
+		files = append(files, file)
+	}
+	for _, file := range files {
+		fmt.Println(file.toString())
 	}
 	return nil
-}
-
-func init() {
-	RootCmd.AddCommand(commitCmd)
 }
 
 func findRoot() (string, error) {
@@ -69,17 +77,18 @@ func findRoot() (string, error) {
 	return "", errors.New(".arciv is not found")
 }
 
-func fullFileList(rootDir string) ([]string, error) {
-	var files []string
+func findPaths(rootDir string) ([]string, error) {
+	var paths []string
 	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		if info.IsDir() && info.Name() == ".arciv" {
-			return filepath.SkipDir
-		}
 		if !info.IsDir() {
-			files = append(files, path[len(rootDir)+1:])
+			paths = append(paths, path[len(rootDir)+1:])
+			return nil
+		}
+		if info.Name() == ".arciv" {
+			return filepath.SkipDir
 		}
 		return nil
 	})
@@ -87,28 +96,43 @@ func fullFileList(rootDir string) ([]string, error) {
 	if err != nil {
 		return []string{}, err
 	}
-	return files, nil
+	return paths, nil
 }
 
-func fileSha256sum(path string) (string, error) {
+func readFile(path string) (File, error) {
+	sha256, err := sha256sum(path)
+	if err != nil {
+		return File{}, err
+	}
+	timestamp, err := readTimestamp(path)
+	if err != nil {
+		return File{}, err
+	}
+
+	return File{
+		Path:      path,
+		Sha256:    sha256,
+		Timestamp: timestamp,
+	}, nil
+}
+
+func sha256sum(path string) ([]byte, error) {
 	hasher := sha256.New()
 	f, err := os.Open(path)
 	if err != nil {
-		return "", err
+		return []byte{}, err
 	}
 	defer f.Close()
 	if _, err := io.Copy(hasher, f); err != nil {
-		return "", err
+		return []byte{}, err
 	}
-	return hex.EncodeToString(hasher.Sum(nil)), nil
+	return hasher.Sum(nil), nil
 }
 
-func fileModified(path string) (string, error) {
+func readTimestamp(path string) (int64, error) {
 	fileInfo, err := os.Stat(path)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
-	timeInt64 := fileInfo.ModTime().Unix()
-	timeStr := fmt.Sprintf("%.8x", timeInt64)
-	return timeStr, nil
+	return fileInfo.ModTime().Unix(), nil
 }
