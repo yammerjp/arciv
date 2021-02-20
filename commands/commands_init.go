@@ -3,6 +3,7 @@ package commands
 import (
   "github.com/spf13/cobra"
   "fmt"
+  "os"
 )
 
 var (
@@ -19,7 +20,10 @@ func initCommand(cmd *cobra.Command, args []string) {
 }
 
 func initAction() (err error) {
-  fmt.Println("hello, arciv")
+  if err := os.Mkdir(".arciv", 0777); err != nil {
+    fmt.Fprintln(os.Stderr, "Failed to create directory '.arciv'")
+    Exit(err, 1)
+  }
   return nil
 }
 
