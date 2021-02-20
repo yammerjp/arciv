@@ -7,6 +7,9 @@ import (
   "strings"
   "errors"
   "path/filepath"
+  "crypto/sha256"
+  "io"
+  "encoding/hex"
 )
 
 var (
@@ -27,13 +30,22 @@ func commitAction() (err error) {
   if err != nil {
     return err
   }
-  //fmt.Println(rootDir)
-  files, err := fullFileList(rootDir)
+  paths, err := fullFileList(rootDir)
   if err != nil {
     return err
   }
-  for _, file := range(files) {
-    fmt.Println(file)
+  for _, path := range(paths) {
+//    fmt.Println(path)
+    hasher := sha256.New()
+    f, err := os.Open(path)
+    if err != nil {
+      return err
+    }
+    defer f.Close()
+    if _, err := io.Copy(hasher, f); err != nil {
+      return err
+    }
+    fmt.Println(hex.EncodeToString(hasher.Sum(nil)) + " " + path)
   }
   return nil
 }
