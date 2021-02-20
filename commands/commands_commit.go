@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -40,23 +41,17 @@ func (file File) toString() string {
 }
 
 func commitAction() (err error) {
-	// fetch root dir
 	rootDir, err := findRoot()
 	if err != nil {
 		return err
 	}
-	// fetch file paths
 	paths, err := findPaths(rootDir)
 	if err != nil {
 		return err
 	}
-	var files []File
-	for _, path := range paths {
-		file, err := readFile(path)
-		if err != nil {
-			return err
-		}
-		files = append(files, file)
+	files, err := readFiles(paths)
+	if err != nil {
+		return err
 	}
 	for _, file := range files {
 		fmt.Println(file.toString())
@@ -97,6 +92,27 @@ func findPaths(rootDir string) ([]string, error) {
 		return []string{}, err
 	}
 	return paths, nil
+}
+
+func readFiles(paths []string) ([]File, error) {
+	var files []File
+	for _, path := range paths {
+		file, err := readFile(path)
+		if err != nil {
+			return []File{}, err
+		}
+		files = append(files, file)
+	}
+	sort.Slice(files, func(i, j int) bool {
+		for k, _ := range files[i].Sha256 {
+			if files[i].Sha256[k] == files[j].Sha256[k] {
+				continue
+			}
+			return files[i].Sha256[k] < files[j].Sha256[k]
+		}
+		return true
+	})
+	return files, nil
 }
 
 func readFile(path string) (File, error) {
