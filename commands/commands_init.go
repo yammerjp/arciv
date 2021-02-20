@@ -20,9 +20,26 @@ func initCommand(cmd *cobra.Command, args []string) {
 }
 
 func initAction() (err error) {
-	if err := os.Mkdir(".arciv", 0777); err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to create directory '.arciv'")
-		Exit(err, 1)
+	err = mkdir(".arciv")
+	if err != nil {
+		return err
+	}
+	err = mkdir(".arciv/commit")
+	if err != nil {
+		return err
+	}
+	err = mkdir(".arciv/list")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func mkdir(path string) error {
+	err := os.Mkdir(path, 0777)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Failed to create directory '"+path+"'")
+		return err
 	}
 	return nil
 }
