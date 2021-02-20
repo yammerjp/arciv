@@ -30,14 +30,14 @@ func init() {
 	RootCmd.AddCommand(commitCmd)
 }
 
-type File struct {
+type Photo struct {
 	Path      string
 	Sha256    []byte
 	Timestamp int64
 }
 
-func (file File) toString() string {
-	return hex.EncodeToString(file.Sha256) + " " + fmt.Sprintf("%.8x", file.Timestamp) + " " + file.Path
+func (photo Photo) toString() string {
+	return hex.EncodeToString(photo.Sha256) + " " + fmt.Sprintf("%.8x", photo.Timestamp) + " " + photo.Path
 }
 
 func commitAction() (err error) {
@@ -49,12 +49,12 @@ func commitAction() (err error) {
 	if err != nil {
 		return err
 	}
-	files, err := readFiles(paths)
+	photos, err := takePhotos(paths)
 	if err != nil {
 		return err
 	}
-	for _, file := range files {
-		fmt.Println(file.toString())
+	for _, photo := range photos {
+		fmt.Println(photo.toString())
 	}
 	return nil
 }
@@ -94,38 +94,38 @@ func findPaths(rootDir string) ([]string, error) {
 	return paths, nil
 }
 
-func readFiles(paths []string) ([]File, error) {
-	var files []File
+func takePhotos(paths []string) ([]Photo, error) {
+	var photos []Photo
 	for _, path := range paths {
-		file, err := readFile(path)
+		photo, err := takePhoto(path)
 		if err != nil {
-			return []File{}, err
+			return []Photo{}, err
 		}
-		files = append(files, file)
+		photos = append(photos, photo)
 	}
-	sort.Slice(files, func(i, j int) bool {
-		for k, _ := range files[i].Sha256 {
-			if files[i].Sha256[k] == files[j].Sha256[k] {
+	sort.Slice(photos, func(i, j int) bool {
+		for k, _ := range photos[i].Sha256 {
+			if photos[i].Sha256[k] == photos[j].Sha256[k] {
 				continue
 			}
-			return files[i].Sha256[k] < files[j].Sha256[k]
+			return photos[i].Sha256[k] < photos[j].Sha256[k]
 		}
 		return true
 	})
-	return files, nil
+	return photos, nil
 }
 
-func readFile(path string) (File, error) {
+func takePhoto(path string) (Photo, error) {
 	sha256, err := sha256sum(path)
 	if err != nil {
-		return File{}, err
+		return Photo{}, err
 	}
 	timestamp, err := readTimestamp(path)
 	if err != nil {
-		return File{}, err
+		return Photo{}, err
 	}
 
-	return File{
+	return Photo{
 		Path:      path,
 		Sha256:    sha256,
 		Timestamp: timestamp,
