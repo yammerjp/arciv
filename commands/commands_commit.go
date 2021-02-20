@@ -6,6 +6,7 @@ import (
   "os"
   "strings"
   "errors"
+  "path/filepath"
 )
 
 var (
@@ -26,7 +27,14 @@ func commitAction() (err error) {
   if err != nil {
     return err
   }
-  fmt.Println(rootDir)
+  //fmt.Println(rootDir)
+  files, err := fullFileList(rootDir)
+  if err != nil {
+    return err
+  }
+  for _, file := range(files) {
+    fmt.Println(file)
+  }
   return nil
 }
 
@@ -45,4 +53,25 @@ func findRoot() (string, error){
     }
   }
   return "", errors.New(".arciv is not found")
+}
+
+func fullFileList(rootDir string) ([]string, error) {
+  var files []string
+  err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
+    if err != nil {
+      return err
+    }
+    if info.IsDir() && info.Name() == ".arciv" {
+      return filepath.SkipDir
+    }
+    if !info.IsDir() {
+      files = append(files, path[len(rootDir)+1:])
+    }
+    return nil
+  })
+
+  if err != nil {
+    return []string{}, err
+  }
+  return files, nil
 }
