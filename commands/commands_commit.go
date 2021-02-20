@@ -26,26 +26,28 @@ func commitCommand(cmd *cobra.Command, args []string) {
 }
 
 func commitAction() (err error) {
+	// fetch root dir
 	rootDir, err := findRoot()
 	if err != nil {
 		return err
 	}
+	// fetch file paths
 	paths, err := fullFileList(rootDir)
 	if err != nil {
 		return err
 	}
+	// sha256sums
 	for _, path := range paths {
-		//    fmt.Println(path)
-		hasher := sha256.New()
-		f, err := os.Open(path)
+		sha256, err := fileSha256sum(path)
 		if err != nil {
 			return err
 		}
-		defer f.Close()
-		if _, err := io.Copy(hasher, f); err != nil {
+		// unix timestamp
+		modifiedTime, err := fileModified(path)
+		if err != nil {
 			return err
 		}
-		fmt.Println(hex.EncodeToString(hasher.Sum(nil)) + " " + path)
+		fmt.Println(sha256 + " " + modifiedTime + " " + path)
 	}
 	return nil
 }
@@ -86,4 +88,27 @@ func fullFileList(rootDir string) ([]string, error) {
 		return []string{}, err
 	}
 	return files, nil
+}
+
+func fileSha256sum(path string) (string, error) {
+	hasher := sha256.New()
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	if _, err := io.Copy(hasher, f); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(hasher.Sum(nil)), nil
+}
+
+func fileModified(path string) (string, error) {
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return "", err
+	}
+	timeInt64 := fileInfo.ModTime().Unix()
+	timeStr := fmt.Sprintf("%.8x", timeInt64)
+	return timeStr, nil
 }
