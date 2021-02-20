@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+  "time"
 )
 
 var (
@@ -36,7 +37,7 @@ type Photo struct {
 	Timestamp int64
 }
 
-func (photo Photo) toString() string {
+func (photo Photo) String() string {
 	return hex.EncodeToString(photo.Sha256) + " " + fmt.Sprintf("%.8x", photo.Timestamp) + " " + photo.Path
 }
 
@@ -53,9 +54,25 @@ func commitAction() (err error) {
 	if err != nil {
 		return err
 	}
-	for _, photo := range photos {
-		fmt.Println(photo.toString())
-	}
+  filepath := rootDir + "/.arciv/list/latest"
+  err = writePhotos(photos, filepath)
+  if err != nil {
+    return err
+  }
+  commitId, err := createCommitId(filepath)
+  if err != nil {
+    return err
+  }
+  err = os.Rename(filepath, rootDir + "/.arciv/list/" + commitId)
+  if err != nil {
+    return err
+  }
+  err = addCommitList(commitId, rootDir)
+  if err != nil {
+    return err
+  }
+  fmt.Fprintln(os.Stderr, "created commit '" + commitId + "'")
+
 	return nil
 }
 
@@ -151,4 +168,36 @@ func readTimestamp(path string) (int64, error) {
 		return 0, err
 	}
 	return fileInfo.ModTime().Unix(), nil
+}
+
+func writePhotos(photos []Photo, filepath string) error {
+  file, err := os.Create(filepath)
+  if err != nil {
+    return err
+  }
+  defer file.Close()
+	for _, photo := range photos {
+    file.WriteString(photo.String() + "\n")
+	}
+  return nil
+}
+
+func createCommitId(filepath string) (string, error) {
+  commitSha256 ,err := sha256sum(filepath)
+  if err != nil {
+    return "", err
+  }
+  commitTime := time.Now().Unix()
+  return fmt.Sprintf("%.8x", commitTime) + "-" + hex.EncodeToString(commitSha256), nil
+}
+
+func addCommitList(commitId string, rootDir string) error {
+  filepath := rootDir + "/.arciv/commit/self"
+  file, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+  if err != nil {
+    return err
+  }
+  defer file.Close()
+  fmt.Fprintln(file, commitId)
+  return nil
 }
