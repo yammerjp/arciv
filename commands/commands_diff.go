@@ -2,6 +2,7 @@ package commands
 
 import (
 	"bufio"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
@@ -55,12 +56,7 @@ func diffAction(args []string) (err error) {
 	}
 
 	deleted, added := diffPhotos(c0, c1)
-	for _, c := range deleted {
-		fmt.Println("\x1b[31m" + "- " + c.String() + "\x1b[0m")
-	}
-	for _, c := range added {
-		fmt.Println("\x1b[32m" + "+ " + c.String() + "\x1b[0m")
-	}
+	printDiffs(deleted, added)
 	return nil
 }
 
@@ -155,4 +151,38 @@ func diffPhotos(commitListBefore, commitListAfter []Photo) (deleted []Photo, add
 		added = append(added, c)
 	}
 	return deleted, added
+}
+
+func printDiffs(deleted, added []Photo) {
+	for _, dc := range deleted {
+		// same sha256
+		idx := findPhotoIndex(added, "", dc.Sha256, 0, FIND_SHA256)
+		if idx != -1 {
+			fmt.Printf("rename: \x1b[31m%s\x1b[0m -> \x1b[32m%s\x1b[0m, sha256: %s\n", dc.Path, added[idx].Path, hex.EncodeToString(dc.Sha256))
+			added = append(added[:idx], added[idx+1:]...)
+			continue
+		}
+		// same path, but not same sha256
+		idx = findPhotoIndex(added, dc.Path, []byte{}, 0, FIND_PATH)
+		if idx != -1 {
+			fmt.Printf("rewrite: %s, sha256: \x1b[31m%s\x1b[0m -> \x1b[32m%s\x1b[0m\n", dc.Path, hex.EncodeToString(dc.Sha256), hex.EncodeToString(added[idx].Sha256))
+			added = append(added[:idx], added[idx+1:]...)
+			continue
+		}
+		// similar photo is not found
+		fmt.Printf("\x1b[31mdeleted: %s, sha256: %s\x1b[0m\n", dc.Path, hex.EncodeToString(dc.Sha256))
+	}
+	// similar photo is not found
+	for _, ac := range added {
+		fmt.Printf("\x1b[32madded: %s, sha256: %s\x1b[0m\n", ac.Path, hex.EncodeToString(ac.Sha256))
+	}
+}
+
+func printDiffsSimple(deleted, added []Photo) {
+	for _, c := range deleted {
+		fmt.Println("\x1b[31m" + "- " + c.String() + "\x1b[0m")
+	}
+	for _, c := range added {
+		fmt.Println("\x1b[32m" + "+ " + c.String() + "\x1b[0m")
+	}
 }
