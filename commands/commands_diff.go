@@ -84,7 +84,8 @@ func findCommitId(alias string, commitIds []string) (foundCId string, err error)
 	}
 
 	for _, cId := range commitIds {
-		if !strings.HasPrefix(cId, alias) {
+    fullhit, sha256hit := strings.HasPrefix(cId, alias), strings.HasPrefix(cId[9:], alias)
+		if !fullhit && !sha256hit {
 			continue
 		}
 		if foundCId != "" {
