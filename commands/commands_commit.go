@@ -3,7 +3,6 @@ package commands
 import (
 	"bufio"
 	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
@@ -114,7 +113,7 @@ func takePhotos(paths []string) ([]Photo, error) {
 }
 
 func takePhoto(path string) (Photo, error) {
-	sha256, err := sha256sum(path)
+  hash, err := calcHash(path)
 	if err != nil {
 		return Photo{}, err
 	}
@@ -125,12 +124,12 @@ func takePhoto(path string) (Photo, error) {
 
 	return Photo{
 		Path:      path,
-		Sha256:    sha256,
+    Hash:      hash,
 		Timestamp: timestamp,
 	}, nil
 }
 
-func sha256sum(path string) ([]byte, error) {
+func calcHash(path string) (Hash, error) {
 	hasher := sha256.New()
 	f, err := os.Open(path)
 	if err != nil {
@@ -170,9 +169,9 @@ func writePhotos(photos []Photo, filepath string) (commitId string, err error) {
 	return createCommitId(hasher.Sum(nil)), nil
 }
 
-func createCommitId(commitSha256 []byte) string {
+func createCommitId(commitHash Hash) string {
 	commitTime := time.Now().Unix()
-	return fmt.Sprintf("%.8x", commitTime) + "-" + hex.EncodeToString(commitSha256)
+	return fmt.Sprintf("%.8x", commitTime) + "-" + commitHash.String()
 }
 
 func addCommitList(commitId string, rootDir string) error {

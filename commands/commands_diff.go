@@ -2,7 +2,6 @@ package commands
 
 import (
 	"bufio"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
@@ -67,8 +66,8 @@ func findCommitId(alias string, commitIds []string) (foundCId string, err error)
 	}
 
 	for _, cId := range commitIds {
-		fullhit, sha256hit := strings.HasPrefix(cId, alias), strings.HasPrefix(cId[9:], alias)
-		if !fullhit && !sha256hit {
+		fullhit, hashhit := strings.HasPrefix(cId, alias), strings.HasPrefix(cId[9:], alias)
+		if !fullhit && !hashhit {
 			continue
 		}
 		if foundCId != "" {
@@ -155,26 +154,26 @@ func diffPhotos(commitListBefore, commitListAfter []Photo) (deleted []Photo, add
 
 func printDiffs(deleted, added []Photo) {
 	for _, dc := range deleted {
-		// same sha256
-		idx := findPhotoIndex(added, "", dc.Sha256, 0, FIND_SHA256)
+		// same hash
+		idx := findPhotoIndex(added, "", dc.Hash, 0, FIND_HASH)
 		if idx != -1 {
-			fmt.Printf("rename: \x1b[31m%s\x1b[0m -> \x1b[32m%s\x1b[0m, sha256: %s\n", dc.Path, added[idx].Path, hex.EncodeToString(dc.Sha256))
+			fmt.Printf("rename: \x1b[31m%s\x1b[0m -> \x1b[32m%s\x1b[0m, hash: %s\n", dc.Path, added[idx].Path, dc.Hash.String())
 			added = append(added[:idx], added[idx+1:]...)
 			continue
 		}
-		// same path, but not same sha256
+		// same path, but not same hash
 		idx = findPhotoIndex(added, dc.Path, []byte{}, 0, FIND_PATH)
 		if idx != -1 {
-			fmt.Printf("rewrite: %s, sha256: \x1b[31m%s\x1b[0m -> \x1b[32m%s\x1b[0m\n", dc.Path, hex.EncodeToString(dc.Sha256), hex.EncodeToString(added[idx].Sha256))
+			fmt.Printf("rewrite: %s, hash: \x1b[31m%s\x1b[0m -> \x1b[32m%s\x1b[0m\n", dc.Path, dc.Hash.String(), added[idx].Hash.String())
 			added = append(added[:idx], added[idx+1:]...)
 			continue
 		}
 		// similar photo is not found
-		fmt.Printf("\x1b[31mdeleted: %s, sha256: %s\x1b[0m\n", dc.Path, hex.EncodeToString(dc.Sha256))
+		fmt.Printf("\x1b[31mdeleted: %s, hash: %s\x1b[0m\n", dc.Path, dc.Hash.String())
 	}
 	// similar photo is not found
 	for _, ac := range added {
-		fmt.Printf("\x1b[32madded: %s, sha256: %s\x1b[0m\n", ac.Path, hex.EncodeToString(ac.Sha256))
+		fmt.Printf("\x1b[32madded: %s, hash: %s\x1b[0m\n", ac.Path, ac.Hash.String())
 	}
 }
 
