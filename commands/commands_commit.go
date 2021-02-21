@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"bufio"
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -11,7 +13,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-  "time"
+	"time"
 )
 
 var (
@@ -54,24 +56,20 @@ func commitAction() (err error) {
 	if err != nil {
 		return err
 	}
-  filepath := rootDir + "/.arciv/list/latest"
-  err = writePhotos(photos, filepath)
-  if err != nil {
-    return err
-  }
-  commitId, err := createCommitId(filepath)
-  if err != nil {
-    return err
-  }
-  err = os.Rename(filepath, rootDir + "/.arciv/list/" + commitId)
-  if err != nil {
-    return err
-  }
-  err = addCommitList(commitId, rootDir)
-  if err != nil {
-    return err
-  }
-  fmt.Fprintln(os.Stderr, "created commit '" + commitId + "'")
+	filepath := rootDir + "/.arciv/list/latest"
+	commitId, err := writePhotos(photos, filepath)
+	if err != nil {
+		return err
+	}
+	err = os.Rename(filepath, rootDir+"/.arciv/list/"+commitId)
+	if err != nil {
+		return err
+	}
+	err = addCommitList(commitId, rootDir)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintln(os.Stderr, "created commit '"+commitId+"'")
 
 	return nil
 }
@@ -121,13 +119,16 @@ func takePhotos(paths []string) ([]Photo, error) {
 		photos = append(photos, photo)
 	}
 	sort.Slice(photos, func(i, j int) bool {
-		for k, _ := range photos[i].Sha256 {
-			if photos[i].Sha256[k] == photos[j].Sha256[k] {
-				continue
-			}
-			return photos[i].Sha256[k] < photos[j].Sha256[k]
+		// compare Sha256
+		if compared := bytes.Compare(photos[i].Sha256, photos[j].Sha256); compared != 0 {
+			return compared < 0
 		}
-		return true
+		// compare Timestamp
+		if photos[i].Timestamp != photos[j].Timestamp {
+			return photos[i].Timestamp < photos[j].Timestamp
+		}
+		// compare Path
+		return photos[i].Path < photos[j].Path
 	})
 	return photos, nil
 }
@@ -170,34 +171,37 @@ func readTimestamp(path string) (int64, error) {
 	return fileInfo.ModTime().Unix(), nil
 }
 
-func writePhotos(photos []Photo, filepath string) error {
-  file, err := os.Create(filepath)
-  if err != nil {
-    return err
-  }
-  defer file.Close()
-	for _, photo := range photos {
-    file.WriteString(photo.String() + "\n")
+func writePhotos(photos []Photo, filepath string) (commitId string, err error) {
+	file, err := os.Create(filepath)
+	if err != nil {
+		return "", err
 	}
-  return nil
+
+	defer file.Close()
+	fw := bufio.NewWriter(file)
+	defer fw.Flush()
+
+	hasher := sha256.New()
+	mw := io.MultiWriter(fw, hasher)
+	for _, photo := range photos {
+		fmt.Fprintln(mw, photo.String())
+	}
+
+	return createCommitId(hasher.Sum(nil)), nil
 }
 
-func createCommitId(filepath string) (string, error) {
-  commitSha256 ,err := sha256sum(filepath)
-  if err != nil {
-    return "", err
-  }
-  commitTime := time.Now().Unix()
-  return fmt.Sprintf("%.8x", commitTime) + "-" + hex.EncodeToString(commitSha256), nil
+func createCommitId(commitSha256 []byte) string {
+	commitTime := time.Now().Unix()
+	return fmt.Sprintf("%.8x", commitTime) + "-" + hex.EncodeToString(commitSha256)
 }
 
 func addCommitList(commitId string, rootDir string) error {
-  filepath := rootDir + "/.arciv/commit/self"
-  file, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-  if err != nil {
-    return err
-  }
-  defer file.Close()
-  fmt.Fprintln(file, commitId)
-  return nil
+	filepath := rootDir + "/.arciv/commit/self"
+	file, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	fmt.Fprintln(file, commitId)
+	return nil
 }
