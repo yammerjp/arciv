@@ -2,26 +2,15 @@ package commands
 
 import (
 	"bytes"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 )
 
-type Hash []byte
-
-func (hash Hash) String() string {
-  return hex.EncodeToString(hash)
-}
-
-func hex2hash(hexStr string) (Hash, error) {
-  return hex.DecodeString(hexStr)
-}
-
 type Photo struct {
 	Path      string
-  Hash      Hash
+	Hash      Hash
 	Timestamp int64
 }
 
@@ -44,7 +33,7 @@ func genPhoto(line string) (Photo, error) {
 	}
 	return Photo{
 		Path:      line[74:],
-    Hash:      hash,
+		Hash:      hash,
 		Timestamp: timestamp,
 	}, nil
 }
@@ -69,7 +58,7 @@ type FindField int
 
 const (
 	FIND_PATH      FindField = 0x0000
-	FIND_HASH    FindField = 0x0010
+	FIND_HASH      FindField = 0x0010
 	FIND_TIMESTAMP FindField = 0x0100
 )
 

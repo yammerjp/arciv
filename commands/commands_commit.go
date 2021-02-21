@@ -1,17 +1,12 @@
 package commands
 
 import (
-	"bufio"
 	"crypto/sha256"
-	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
 	"io"
 	"os"
-	"path/filepath"
 	"sort"
-	"strings"
-	"time"
 )
 
 var (
@@ -32,11 +27,7 @@ func init() {
 }
 
 func commitAction() (err error) {
-	rootDir, err := findRoot()
-	if err != nil {
-		return err
-	}
-	paths, err := findPaths(rootDir)
+	paths, err := findPaths()
 	if err != nil {
 		return err
 	}
@@ -44,57 +35,10 @@ func commitAction() (err error) {
 	if err != nil {
 		return err
 	}
-	filepath := rootDir + "/.arciv/list/latest"
-	commitId, err := writePhotos(photos, filepath)
-	if err != nil {
-		return err
-	}
-	err = os.Rename(filepath, rootDir+"/.arciv/list/"+commitId)
-	if err != nil {
-		return err
-	}
-	err = addCommitList(commitId, rootDir)
-	if err != nil {
-		return err
-	}
-	fmt.Fprintln(os.Stderr, "created commit '"+commitId+"'")
+	c, err := createCommit(photos)
+	fmt.Fprintln(os.Stderr, "created commit '"+c.Id+"'")
 
 	return nil
-}
-
-func findRoot() (string, error) {
-	// find root directory (exist .arciv)
-	// ex . current dir is /hoge/fuga/wara
-	// search /hoge/fuga/wara/.arciv , and next /hoge/fuga/.arciv , and next /hoge/.arciv , and next /.arciv
-	currentDir, _ := os.Getwd()
-	for dir := currentDir; strings.LastIndex(dir, "/") != -1; dir = dir[:strings.LastIndex(dir, "/")] {
-		if f, err := os.Stat(dir + "/.arciv"); !os.IsNotExist(err) && f.IsDir() {
-			return dir, nil
-		}
-	}
-	return "", errors.New(".arciv is not found")
-}
-
-func findPaths(rootDir string) ([]string, error) {
-	var paths []string
-	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if !info.IsDir() {
-			paths = append(paths, path[len(rootDir)+1:])
-			return nil
-		}
-		if info.Name() == ".arciv" {
-			return filepath.SkipDir
-		}
-		return nil
-	})
-
-	if err != nil {
-		return []string{}, err
-	}
-	return paths, nil
 }
 
 func takePhotos(paths []string) ([]Photo, error) {
@@ -113,7 +57,7 @@ func takePhotos(paths []string) ([]Photo, error) {
 }
 
 func takePhoto(path string) (Photo, error) {
-  hash, err := calcHash(path)
+	hash, err := calcFileHash(path)
 	if err != nil {
 		return Photo{}, err
 	}
@@ -124,12 +68,12 @@ func takePhoto(path string) (Photo, error) {
 
 	return Photo{
 		Path:      path,
-    Hash:      hash,
+		Hash:      hash,
 		Timestamp: timestamp,
 	}, nil
 }
 
-func calcHash(path string) (Hash, error) {
+func calcFileHash(path string) (Hash, error) {
 	hasher := sha256.New()
 	f, err := os.Open(path)
 	if err != nil {
@@ -148,39 +92,4 @@ func readTimestamp(path string) (int64, error) {
 		return 0, err
 	}
 	return fileInfo.ModTime().Unix(), nil
-}
-
-func writePhotos(photos []Photo, filepath string) (commitId string, err error) {
-	file, err := os.Create(filepath)
-	if err != nil {
-		return "", err
-	}
-
-	defer file.Close()
-	fw := bufio.NewWriter(file)
-	defer fw.Flush()
-
-	hasher := sha256.New()
-	mw := io.MultiWriter(fw, hasher)
-	for _, photo := range photos {
-		fmt.Fprintln(mw, photo.String())
-	}
-
-	return createCommitId(hasher.Sum(nil)), nil
-}
-
-func createCommitId(commitHash Hash) string {
-	commitTime := time.Now().Unix()
-	return fmt.Sprintf("%.8x", commitTime) + "-" + commitHash.String()
-}
-
-func addCommitList(commitId string, rootDir string) error {
-	filepath := rootDir + "/.arciv/commit/self"
-	file, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	fmt.Fprintln(file, commitId)
-	return nil
 }

@@ -83,11 +83,7 @@ func findCommitId(alias string, commitIds []string) (foundCId string, err error)
 }
 
 func loadCommitListSelf() ([]string, error) {
-	rootDir, err := findRoot()
-	if err != nil {
-		return []string{}, err
-	}
-	return loadCommitList(rootDir + "/.arciv/commit/self")
+	return loadCommitList(rootDir() + "/.arciv/commit/self")
 }
 
 func loadCommitList(filepath string) ([]string, error) {
@@ -108,11 +104,7 @@ func loadCommitList(filepath string) ([]string, error) {
 }
 
 func loadCommit(commitId string) (photos []Photo, err error) {
-	rootDir, err := findRoot()
-	if err != nil {
-		return []Photo{}, err
-	}
-	f, err := os.Open(rootDir + "/.arciv/list/" + commitId)
+	f, err := os.Open(rootDir() + "/.arciv/list/" + commitId)
 	if err != nil {
 		return []Photo{}, err
 	}
