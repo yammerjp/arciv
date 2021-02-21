@@ -53,27 +53,14 @@ func diffAction(args []string) (err error) {
 	if err != nil {
 		return err
 	}
-	i0, i1 := 0, 0
-	for i0 < len(c0) && i1 < len(c1) {
-		compared := comparePhoto(c0[i0], c1[i1])
-		if compared == 0 {
-			i0++
-			i1++
-		} else if compared < 0 {
-			fmt.Println("\x1b[31m" + "- " + c0[i0].String() + "\x1b[0m")
-			i0++
-		} else {
-			fmt.Println("\x1b[32m" + "+ " + c1[i1].String() + "\x1b[0m")
-			i1++
-		}
-	}
-	for ; i0 < len(c0); i0++ {
-		fmt.Println("\x1b[31m" + "- " + c0[i0].String() + "\x1b[0m")
-	}
-	for ; i1 < len(c1); i1++ {
-		fmt.Println("\x1b[32m" + "+ " + c1[i1].String() + "\x1b[0m")
-	}
 
+	deleted, added := diffPhotos(c0, c1)
+	for _, c := range deleted {
+		fmt.Println("\x1b[31m" + "- " + c.String() + "\x1b[0m")
+	}
+	for _, c := range added {
+		fmt.Println("\x1b[32m" + "+ " + c.String() + "\x1b[0m")
+	}
 	return nil
 }
 
@@ -84,7 +71,7 @@ func findCommitId(alias string, commitIds []string) (foundCId string, err error)
 	}
 
 	for _, cId := range commitIds {
-    fullhit, sha256hit := strings.HasPrefix(cId, alias), strings.HasPrefix(cId[9:], alias)
+		fullhit, sha256hit := strings.HasPrefix(cId, alias), strings.HasPrefix(cId[9:], alias)
 		if !fullhit && !sha256hit {
 			continue
 		}
@@ -144,4 +131,28 @@ func loadCommit(commitId string) (photos []Photo, err error) {
 		photos = append(photos, photo)
 	}
 	return photos, nil
+}
+
+func diffPhotos(commitListBefore, commitListAfter []Photo) (deleted []Photo, added []Photo) {
+	ib, ia := 0, 0
+	for ib < len(commitListBefore) && ia < len(commitListAfter) {
+		compared := comparePhoto(commitListBefore[ib], commitListAfter[ia])
+		if compared == 0 {
+			ib++
+			ia++
+		} else if compared < 0 {
+			deleted = append(deleted, commitListBefore[ib])
+			ib++
+		} else {
+			added = append(added, commitListAfter[ia])
+			ia++
+		}
+	}
+	for _, c := range commitListBefore[ib:] {
+		deleted = append(deleted, c)
+	}
+	for _, c := range commitListAfter[ia:] {
+		added = append(added, c)
+	}
+	return deleted, added
 }
