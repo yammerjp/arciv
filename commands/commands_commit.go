@@ -2,7 +2,6 @@ package commands
 
 import (
 	"bufio"
-	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -31,16 +30,6 @@ func commitCommand(cmd *cobra.Command, args []string) {
 
 func init() {
 	RootCmd.AddCommand(commitCmd)
-}
-
-type Photo struct {
-	Path      string
-	Sha256    []byte
-	Timestamp int64
-}
-
-func (photo Photo) String() string {
-	return hex.EncodeToString(photo.Sha256) + " " + fmt.Sprintf("%.8x", photo.Timestamp) + " " + photo.Path
 }
 
 func commitAction() (err error) {
@@ -119,16 +108,7 @@ func takePhotos(paths []string) ([]Photo, error) {
 		photos = append(photos, photo)
 	}
 	sort.Slice(photos, func(i, j int) bool {
-		// compare Sha256
-		if compared := bytes.Compare(photos[i].Sha256, photos[j].Sha256); compared != 0 {
-			return compared < 0
-		}
-		// compare Timestamp
-		if photos[i].Timestamp != photos[j].Timestamp {
-			return photos[i].Timestamp < photos[j].Timestamp
-		}
-		// compare Path
-		return photos[i].Path < photos[j].Path
+		return comparePhoto(photos[i], photos[j]) < 0
 	})
 	return photos, nil
 }
