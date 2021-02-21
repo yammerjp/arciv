@@ -1,5 +1,7 @@
 # arciv
 
+Arciv is Vesion Control System for binary data to archive.
+
 ## setup
 
 ```sh
