@@ -21,20 +21,25 @@ func rootDir() string {
 	return "" // don't call anytime
 }
 
-func findPaths() ([]string, error) {
-	root := rootDir()
+func findPaths(root string, skipNames []string) ([]string, error) {
 	var paths []string
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		if !info.IsDir() {
-			// add relative path from arciv's root directory
-			paths = append(paths, path[len(root)+1:])
+		name := info.Name()
+		for _, sname := range skipNames {
+			if sname != name {
+				continue
+			}
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
 			return nil
 		}
-		if info.Name() == ".arciv" {
-			return filepath.SkipDir
+		if !info.IsDir() {
+			// add relative path from root directory
+			paths = append(paths, path[len(root)+1:])
 		}
 		return nil
 	})

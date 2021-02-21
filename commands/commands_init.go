@@ -32,6 +32,19 @@ func initAction() (err error) {
 	if err != nil {
 		return err
 	}
+
+	fR, err := os.Create(".arciv/repositories")
+	if err != nil {
+		return err
+	}
+	defer fR.Close()
+	fmt.Fprintln(fR, "self")
+
+	fC, err := os.Create(".arciv/commit/self")
+	if err != nil {
+		return err
+	}
+	defer fC.Close()
 	return nil
 }
 

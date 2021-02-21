@@ -27,7 +27,7 @@ func init() {
 }
 
 func commitAction() (err error) {
-	paths, err := findPaths()
+	paths, err := findPaths(rootDir(), []string{".arciv"})
 	if err != nil {
 		return err
 	}

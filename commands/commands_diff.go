@@ -83,12 +83,12 @@ func findCommitId(alias string, commitIds []string) (foundCId string, err error)
 }
 
 func loadCommitListSelf() ([]string, error) {
-	return loadCommitList(rootDir() + "/.arciv/commit/self")
+	return loadLines(rootDir() + "/.arciv/commit/self")
 }
 
-func loadCommitList(filepath string) ([]string, error) {
+func loadLines(filepath string) ([]string, error) {
 	var commits []string
-	f, err := os.Open(filepath)
+	f, err := os.OpenFile(filepath, os.O_RDONLY, 0666)
 	if err != nil {
 		return []string{}, err
 	}
