@@ -81,6 +81,9 @@ func reposAdd(name string, path string) error {
 	if strings.Index(name, " ") != -1 {
 		return errors.New("Repository name must not include space")
 	}
+	if !strings.HasPrefix(path, "file:///") {
+		return errors.New("Repository path must be file:///...")
+	}
 	repos, err := loadRepos()
 	if err != nil {
 		return err
