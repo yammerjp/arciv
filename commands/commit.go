@@ -15,7 +15,21 @@ type Commit struct {
 	Photos    []Photo
 }
 
-func createCommit(photos []Photo) (Commit, error) {
+func createCommit() (Commit, error) {
+	paths, err := findPaths(rootDir(), []string{".arciv"})
+	if err != nil {
+		return Commit{}, err
+	}
+	photos, err := takePhotos(paths)
+	if err != nil {
+		return Commit{}, err
+	}
+	commit, err := createCommitStruct(photos)
+	fmt.Fprintln(os.Stderr, "created commit '"+commit.Id+"'")
+	return commit, nil
+}
+
+func createCommitStruct(photos []Photo) (Commit, error) {
 	hash := calcHash(photos)
 	timestamp := time.Now().Unix()
 	c := Commit{

@@ -2,7 +2,6 @@ package commands
 
 import (
 	"crypto/sha256"
-	"fmt"
 	"github.com/spf13/cobra"
 	"io"
 	"os"
@@ -27,18 +26,8 @@ func init() {
 }
 
 func commitAction() (err error) {
-	paths, err := findPaths(rootDir(), []string{".arciv"})
-	if err != nil {
-		return err
-	}
-	photos, err := takePhotos(paths)
-	if err != nil {
-		return err
-	}
-	c, err := createCommit(photos)
-	fmt.Fprintln(os.Stderr, "created commit '"+c.Id+"'")
-
-	return nil
+	_, err = createCommit()
+	return err
 }
 
 func takePhotos(paths []string) ([]Photo, error) {
