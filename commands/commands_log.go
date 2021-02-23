@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
 )
@@ -13,14 +14,26 @@ var (
 )
 
 func logCommand(cmd *cobra.Command, args []string) {
-	if err := logAction(); err != nil {
+	if err := logAction(args); err != nil {
 		Exit(err, 1)
 	}
 }
 
-func logAction() (err error) {
+func logAction(args []string) (err error) {
+  if len(args) > 2 {
+    return errors.New("Usage: arciv log ([repository-name])")
+  }
+  var repo Repository
+  if len(args) == 0 {
+    repo = selfRepo
+  } else {
+    repo, err = findRepo(args[0])
+    if err != nil {
+      return err
+    }
+  }
 
-	timeline, err := selfRepo.LoadTimeline()
+	timeline, err := repo.LoadTimeline()
 	if err != nil {
 		return err
 	}
