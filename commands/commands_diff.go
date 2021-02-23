@@ -94,8 +94,20 @@ func loadTimeline(repoName string) ([]string, error) {
 	return loadLines(repoPath + "/.arciv/timeline")
 }
 
+func Exists(filename string) bool {
+	_, err := os.Stat(filename)
+	return err == nil
+}
+
 func loadLines(filepath string) ([]string, error) {
-	var commits []string
+	if !Exists(filepath) {
+		file, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			return []string{}, err
+		}
+		file.Close()
+	}
+	var lines []string
 	f, err := os.OpenFile(filepath, os.O_RDONLY, 0666)
 	if err != nil {
 		return []string{}, err
@@ -103,12 +115,12 @@ func loadLines(filepath string) ([]string, error) {
 	defer f.Close()
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		commits = append(commits, scanner.Text())
+		lines = append(lines, scanner.Text())
 	}
 	if err := scanner.Err(); err != nil {
 		return []string{}, err
 	}
-	return commits, nil
+	return lines, nil
 }
 
 func loadCommit(commitId string) (photos []Photo, err error) {
@@ -156,11 +168,11 @@ func printDiffs(deleted, added []Photo) {
 	for _, dc := range deleted {
 		// same hash
 		idx := findPhotoIndex(added, dc, FIND_HASH|FIND_PATH)
-    if idx != -1 {
-	    fmt.Printf("update: %s, hash: %s, timestamp: \x1b[31m%.8x\x1b[0m -> \x1b[32m%.8x\x1b[0m\n", dc.Path, dc.Hash.String(), dc.Timestamp, added[idx].Timestamp)
+		if idx != -1 {
+			fmt.Printf("update: %s, hash: %s, timestamp: \x1b[31m%.8x\x1b[0m -> \x1b[32m%.8x\x1b[0m\n", dc.Path, dc.Hash.String(), dc.Timestamp, added[idx].Timestamp)
 			added = append(added[:idx], added[idx+1:]...)
 			continue
-    }
+		}
 		idx = findPhotoIndex(added, dc, FIND_HASH)
 		if idx != -1 {
 			fmt.Printf("rename: \x1b[31m%s\x1b[0m -> \x1b[32m%s\x1b[0m, hash: %s\n", dc.Path, added[idx].Path, dc.Hash.String())
