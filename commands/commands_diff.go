@@ -155,14 +155,20 @@ func diffPhotos(photosBefore, photosAfter []Photo) (deleted []Photo, added []Pho
 func printDiffs(deleted, added []Photo) {
 	for _, dc := range deleted {
 		// same hash
-		idx := findPhotoIndex(added, "", dc.Hash, 0, FIND_HASH)
+		idx := findPhotoIndex(added, dc, FIND_HASH|FIND_PATH)
+    if idx != -1 {
+	    fmt.Printf("update: %s, hash: %s, timestamp: \x1b[31m%.8x\x1b[0m -> \x1b[32m%.8x\x1b[0m\n", dc.Path, dc.Hash.String(), dc.Timestamp, added[idx].Timestamp)
+			added = append(added[:idx], added[idx+1:]...)
+			continue
+    }
+		idx = findPhotoIndex(added, dc, FIND_HASH)
 		if idx != -1 {
 			fmt.Printf("rename: \x1b[31m%s\x1b[0m -> \x1b[32m%s\x1b[0m, hash: %s\n", dc.Path, added[idx].Path, dc.Hash.String())
 			added = append(added[:idx], added[idx+1:]...)
 			continue
 		}
 		// same path, but not same hash
-		idx = findPhotoIndex(added, dc.Path, []byte{}, 0, FIND_PATH)
+		idx = findPhotoIndex(added, dc, FIND_PATH)
 		if idx != -1 {
 			fmt.Printf("rewrite: %s, hash: \x1b[31m%s\x1b[0m -> \x1b[32m%s\x1b[0m\n", dc.Path, dc.Hash.String(), added[idx].Hash.String())
 			added = append(added[:idx], added[idx+1:]...)

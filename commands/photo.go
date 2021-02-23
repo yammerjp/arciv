@@ -57,20 +57,20 @@ func comparePhoto(p0, p1 Photo) int {
 type FindField int
 
 const (
-	FIND_PATH      FindField = 0x0000
+	FIND_PATH      FindField = 0x0001
 	FIND_HASH      FindField = 0x0010
 	FIND_TIMESTAMP FindField = 0x0100
 )
 
-func findPhotoIndex(photos []Photo, path string, hash []byte, timestamp int64, flag FindField) int {
+func findPhotoIndex(photos []Photo, comparingPhoto Photo, flag FindField) int {
 	for i, p := range photos {
-		if (flag&FIND_HASH) == FIND_HASH && bytes.Compare(p.Hash, hash) != 0 {
+		if (flag&FIND_HASH) != 0000 && bytes.Compare(p.Hash, comparingPhoto.Hash) != 0 {
 			continue
 		}
-		if (flag&FIND_TIMESTAMP) == FIND_TIMESTAMP && p.Timestamp != timestamp {
+		if (flag&FIND_TIMESTAMP) != 0000 && p.Timestamp != comparingPhoto.Timestamp {
 			continue
 		}
-		if (flag&FIND_PATH) == FIND_PATH && p.Path == path {
+		if (flag&FIND_PATH) != 0x0000 && p.Path != comparingPhoto.Path {
 			continue
 		}
 		return i
