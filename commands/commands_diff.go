@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
@@ -34,28 +33,27 @@ func diffAction(args []string) (err error) {
 	if err != nil {
 		return err
 	}
-	cId0, err := findCommitId(args[0], timelineSelf)
+	commitId0, err := findCommitId(args[0], timelineSelf)
 	if err != nil {
 		return err
 	}
-	cId1, err := findCommitId(args[1], timelineSelf)
+	commitId1, err := findCommitId(args[1], timelineSelf)
 	if err != nil {
 		return err
 	}
-	if cId0 == cId1 {
+	if commitId0 == commitId1 {
 		return errors.New("Same commit")
 	}
-	c0, err := loadCommit(cId0)
+	photos0, err := selfRepo.loadPhotos(commitId0)
 	if err != nil {
 		return err
 	}
-	c1, err := loadCommit(cId1)
+	photos1, err := selfRepo.loadPhotos(commitId1)
 	if err != nil {
 		return err
 	}
 
-	deleted, added := diffPhotos(c0, c1)
-	printDiffs(deleted, added)
+	printDiffs(diffPhotos(photos0, photos1))
 	return nil
 }
 
@@ -66,7 +64,8 @@ func findCommitId(alias string, commitIds []string) (foundCId string, err error)
 	}
 
 	for _, cId := range commitIds {
-		fullhit, hashhit := strings.HasPrefix(cId, alias), strings.HasPrefix(cId[9:], alias)
+		fullhit := strings.HasPrefix(cId, alias)
+		hashhit := strings.HasPrefix(cId[9:], alias)
 		if !fullhit && !hashhit {
 			continue
 		}
@@ -85,47 +84,6 @@ func findCommitId(alias string, commitIds []string) (foundCId string, err error)
 func Exists(filename string) bool {
 	_, err := os.Stat(filename)
 	return err == nil
-}
-
-func loadLines(filepath string) ([]string, error) {
-	if !Exists(filepath) {
-		file, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-		if err != nil {
-			return []string{}, err
-		}
-		file.Close()
-	}
-	var lines []string
-	f, err := os.OpenFile(filepath, os.O_RDONLY, 0666)
-	if err != nil {
-		return []string{}, err
-	}
-	defer f.Close()
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	if err := scanner.Err(); err != nil {
-		return []string{}, err
-	}
-	return lines, nil
-}
-
-func loadCommit(commitId string) (photos []Photo, err error) {
-	f, err := os.Open(rootDir() + "/.arciv/list/" + commitId)
-	if err != nil {
-		return []Photo{}, err
-	}
-	defer f.Close()
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		photo, err := genPhoto(scanner.Text())
-		if err != nil {
-			return []Photo{}, err
-		}
-		photos = append(photos, photo)
-	}
-	return photos, nil
 }
 
 func diffPhotos(photosBefore, photosAfter []Photo) (deleted []Photo, added []Photo) {

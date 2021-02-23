@@ -65,6 +65,51 @@ func (repository Repository) WritePhotos(commit Commit) error {
 	return nil
 }
 
+func (repository Repository) loadPhotos(commitId string) (photos []Photo, err error) {
+	root, err := repository.LocalPath()
+	if err != nil {
+		return []Photo{}, err
+	}
+	f, err := os.Open(root + "/.arciv/list/" + commitId)
+	if err != nil {
+		return []Photo{}, err
+	}
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		photo, err := genPhoto(scanner.Text())
+		if err != nil {
+			return []Photo{}, err
+		}
+		photos = append(photos, photo)
+	}
+	return photos, nil
+}
+
+func loadLines(filepath string) ([]string, error) {
+	if !Exists(filepath) {
+		file, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			return []string{}, err
+		}
+		file.Close()
+	}
+	var lines []string
+	f, err := os.OpenFile(filepath, os.O_RDONLY, 0666)
+	if err != nil {
+		return []string{}, err
+	}
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		return []string{}, err
+	}
+	return lines, nil
+}
+
 var selfRepo Repository
 
 func init() {

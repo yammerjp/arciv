@@ -32,27 +32,27 @@ func diffBlobAction(args []string) (err error) {
 	if err != nil {
 		return err
 	}
-	cId0, err := findCommitId(args[0], timelineSelf)
+	commitId0, err := findCommitId(args[0], timelineSelf)
 	if err != nil {
 		return err
 	}
-	cId1, err := findCommitId(args[1], timelineSelf)
+	commitId1, err := findCommitId(args[1], timelineSelf)
 	if err != nil {
 		return err
 	}
-	if cId0 == cId1 {
+	if commitId0 == commitId1 {
 		return errors.New("Same commit")
 	}
-	c0, err := loadCommit(cId0)
+	photos0, err := selfRepo.loadPhotos(commitId0)
 	if err != nil {
 		return err
 	}
-	c1, err := loadCommit(cId1)
+	photos1, err := selfRepo.loadPhotos(commitId1)
 	if err != nil {
 		return err
 	}
 
-	deleted, added := diffHashes(c0, c1)
+	deleted, added := diffHashes(photos0, photos1)
 	printDiffHashes(deleted, added)
 
 	return nil

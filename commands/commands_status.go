@@ -32,7 +32,7 @@ func statusAction() (err error) {
 		return err
 	}
 	latestCommitId := timelineSelf[len(timelineSelf)-1]
-	latestCommitPhotos, err := loadCommit(latestCommitId)
+	latestCommitPhotos, err := selfRepo.loadPhotos(latestCommitId)
 	if err != nil {
 		return err
 	}
