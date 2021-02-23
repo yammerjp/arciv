@@ -88,7 +88,7 @@ func storeAction(args []string) (err error) {
 
 func fetchRepoHashs(repo Repository) ([]string, error) {
 	//   - .arciv/blob が無ければ掘る
-	repoPath, err := repo.LocalPath()
+	repoPath, err := repo.FilePath()
 	if err != nil {
 		return []string{}, err
 	}
@@ -114,11 +114,11 @@ func isInclude(strs []string, s string) bool {
 func sendLocalBlobs(toRepo Repository, photos []Photo) error {
 	for _, photo := range photos {
 		from := rootDir + "/" + photo.Path
-		remoteLocalPath, err := toRepo.LocalPath()
+		remoteFilePath, err := toRepo.FilePath()
 		if err != nil {
 			return err
 		}
-		to := remoteLocalPath + "/.arciv/blob/" + photo.Hash.String()
+		to := remoteFilePath + "/.arciv/blob/" + photo.Hash.String()
 		err = copyFile(from, to)
 		if err != nil {
 			return err

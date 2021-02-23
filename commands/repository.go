@@ -17,7 +17,7 @@ func (repository Repository) String() string {
 	return repository.Name + " " + repository.Path
 }
 
-func (repository Repository) LocalPath() (string, error) {
+func (repository Repository) FilePath() (string, error) {
 	if !strings.HasPrefix(repository.Path, "file:///") {
 		return "", errors.New("The repository does not have local path")
 	}
@@ -25,7 +25,7 @@ func (repository Repository) LocalPath() (string, error) {
 }
 
 func (repository Repository) AddTimeline(commit Commit) error {
-	root, err := repository.LocalPath()
+	root, err := repository.FilePath()
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func (repository Repository) AddTimeline(commit Commit) error {
 }
 
 func (repository Repository) loadTimeline() ([]string, error) {
-	repoPath, err := repository.LocalPath()
+	repoPath, err := repository.FilePath()
 	if err != nil {
 		return []string{}, err
 	}
@@ -47,7 +47,7 @@ func (repository Repository) loadTimeline() ([]string, error) {
 }
 
 func (repository Repository) WritePhotos(commit Commit) error {
-	root, err := repository.LocalPath()
+	root, err := repository.FilePath()
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func (repository Repository) WritePhotos(commit Commit) error {
 }
 
 func (repository Repository) loadPhotos(commitId string) (photos []Photo, err error) {
-	root, err := repository.LocalPath()
+	root, err := repository.FilePath()
 	if err != nil {
 		return []Photo{}, err
 	}
