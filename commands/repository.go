@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"os"
@@ -43,6 +44,25 @@ func (repository Repository) loadTimeline() ([]string, error) {
 		return []string{}, err
 	}
 	return loadLines(repoPath + "/.arciv/timeline")
+}
+
+func (repository Repository) WritePhotos(commit Commit) error {
+	root, err := repository.LocalPath()
+	if err != nil {
+		return err
+	}
+	file, err := os.Create(root + "/.arciv/list/" + commit.Id)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	fw := bufio.NewWriter(file)
+	defer fw.Flush()
+	for _, photo := range commit.Photos {
+		fmt.Fprintln(fw, photo.String())
+	}
+	return nil
 }
 
 var selfRepo Repository

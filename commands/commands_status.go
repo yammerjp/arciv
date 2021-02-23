@@ -22,11 +22,7 @@ func init() {
 }
 
 func statusAction() (err error) {
-	paths, err := findPaths(rootDir(), []string{".arciv"})
-	if err != nil {
-		return err
-	}
-	nowPhotos, err := takePhotos(paths)
+	nowPhotos, err := takePhotosSelfRepo()
 	if err != nil {
 		return err
 	}

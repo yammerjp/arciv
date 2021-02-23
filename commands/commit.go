@@ -1,10 +1,11 @@
 package commands
 
 import (
-	"bufio"
 	"crypto/sha256"
 	"fmt"
+	"io"
 	"os"
+	"sort"
 	"time"
 )
 
@@ -16,61 +17,87 @@ type Commit struct {
 }
 
 func createCommit() (Commit, error) {
-	paths, err := findPaths(rootDir(), []string{".arciv"})
+	// Photos
+	photos, err := takePhotosSelfRepo()
 	if err != nil {
 		return Commit{}, err
 	}
-	photos, err := takePhotos(paths)
-	if err != nil {
-		return Commit{}, err
+	// Hash
+	hasher := sha256.New()
+	for _, photo := range photos {
+		fmt.Fprintln(hasher, photo.String())
 	}
-	commit, err := createCommitStruct(photos)
-	fmt.Fprintln(os.Stderr, "created commit '"+commit.Id+"'")
-	return commit, nil
-}
-
-func createCommitStruct(photos []Photo) (Commit, error) {
-	hash := calcHash(photos)
+	hash := Hash(hasher.Sum(nil))
+	// Timestamp
 	timestamp := time.Now().Unix()
-	c := Commit{
+
+	commit := Commit{
 		Id:        fmt.Sprintf("%.8x", timestamp) + "-" + hash.String(),
 		Timestamp: timestamp,
 		Hash:      hash,
 		Photos:    photos,
 	}
-	err := c.WritePhotosSelf()
+
+	err = selfRepo.WritePhotos(commit)
 	if err != nil {
 		return Commit{}, err
 	}
-	err = selfRepo.AddTimeline(c)
+	err = selfRepo.AddTimeline(commit)
 	if err != nil {
 		return Commit{}, err
 	}
-	return c, nil
+	fmt.Fprintln(os.Stderr, "created commit '"+commit.Id+"'")
+	return commit, nil
 }
 
-func calcHash(photos []Photo) Hash {
+func takePhotosSelfRepo() ([]Photo, error) {
+	root, err := selfRepo.LocalPath()
+	if err != nil {
+		return []Photo{}, err
+	}
+	paths, err := findPaths(root, []string{".arciv"})
+	if err != nil {
+		return []Photo{}, err
+	}
+
+	var photos []Photo
+	for _, path := range paths {
+		photo, err := takePhoto(path)
+		if err != nil {
+			return []Photo{}, err
+		}
+		photos = append(photos, photo)
+	}
+	sort.Slice(photos, func(i, j int) bool {
+		return comparePhoto(photos[i], photos[j]) < 0
+	})
+	return photos, nil
+}
+
+func takePhoto(path string) (Photo, error) {
+	// hash
 	hasher := sha256.New()
-	for _, photo := range photos {
-		fmt.Fprintln(hasher, photo.String())
-	}
-	return hasher.Sum(nil)
-}
-
-func (commit Commit) WritePhotosSelf() error {
-	return commit.WritePhotos(rootDir())
-}
-func (commit Commit) WritePhotos(root string) error {
-	file, err := os.Create(root + "/.arciv/list/" + commit.Id)
+	f, err := os.Open(path)
 	if err != nil {
-		return err
+		return Photo{}, err
 	}
-	defer file.Close()
+	_, err = io.Copy(hasher, f)
+	if err != nil {
+		return Photo{}, err
+	}
+	hash := hasher.Sum(nil)
+	f.Close()
 
-	fw := bufio.NewWriter(file)
-	defer fw.Flush()
-	for _, photo := range commit.Photos {
-		fmt.Fprintln(fw, photo.String())
+	//timestamp
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return Photo{}, err
 	}
-	return nil
+	timestamp := fileInfo.ModTime().Unix()
+
+	return Photo{
+		Path:      path,
+		Hash:      hash,
+		Timestamp: timestamp,
+	}, nil
 }

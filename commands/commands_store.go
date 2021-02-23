@@ -84,7 +84,7 @@ func storeAction(args []string) (err error) {
 		return err
 	}
 	os.MkdirAll(remoteRoot+"/.arciv/list", 0777)
-	err = commit.WritePhotos(remoteRoot)
+	err = remoteRepo.WritePhotos(commit)
 	if err != nil {
 		return err
 	}
