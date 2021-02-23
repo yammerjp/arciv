@@ -35,10 +35,6 @@ func storeAction(args []string) (err error) {
 	if err != nil {
 		return err
 	}
-	remoteRoot, err := remoteRepo.LocalPath()
-	if err != nil {
-		return err
-	}
 
 	//   - commitする
 	commit, err := createCommit()
@@ -63,7 +59,7 @@ func storeAction(args []string) (err error) {
 	}
 
 	//   - ファイルを転送する
-	err = sendBlobs(remoteRepo, photosToSend)
+	err = sendLocalBlobs(remoteRepo, photosToSend)
 	if err != nil {
 		return err
 	}
@@ -83,7 +79,6 @@ func storeAction(args []string) (err error) {
 	if err != nil {
 		return err
 	}
-	os.MkdirAll(remoteRoot+"/.arciv/list", 0777)
 	err = remoteRepo.WritePhotos(commit)
 	if err != nil {
 		return err
@@ -116,10 +111,9 @@ func isInclude(strs []string, s string) bool {
 	return false
 }
 
-func sendBlobs(toRepo Repository, photos []Photo) error {
-	root := rootDir()
+func sendLocalBlobs(toRepo Repository, photos []Photo) error {
 	for _, photo := range photos {
-		from := root + "/" + photo.Path
+		from := rootDir + "/" + photo.Path
 		remoteLocalPath, err := toRepo.LocalPath()
 		if err != nil {
 			return err

@@ -7,18 +7,20 @@ import (
 	"strings"
 )
 
-func rootDir() string {
+var rootDir string
+func init() {
 	// find arciv's root directory (exist .arciv)
 	// ex . current dir is /hoge/fuga/wara
 	// search /hoge/fuga/wara/.arciv , and next /hoge/fuga/.arciv , and next /hoge/.arciv , and next /.arciv
 	currentDir, _ := os.Getwd()
 	for dir := currentDir; strings.LastIndex(dir, "/") != -1; dir = dir[:strings.LastIndex(dir, "/")] {
 		if f, err := os.Stat(dir + "/.arciv"); !os.IsNotExist(err) && f.IsDir() {
-			return dir
+      rootDir = dir
+			return
 		}
 	}
 	Exit(errors.New(".arciv is not found"), 1)
-	return "" // don't call anytime
+	return
 }
 
 func findPaths(root string, skipNames []string) ([]string, error) {

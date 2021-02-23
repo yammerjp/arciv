@@ -51,6 +51,7 @@ func (repository Repository) WritePhotos(commit Commit) error {
 	if err != nil {
 		return err
 	}
+	os.MkdirAll(root+"/.arciv/list", 0777)
 	file, err := os.Create(root + "/.arciv/list/" + commit.Id)
 	if err != nil {
 		return err
@@ -113,5 +114,5 @@ func loadLines(filepath string) ([]string, error) {
 var selfRepo Repository
 
 func init() {
-	selfRepo = Repository{Name: "self", Path: "file://" + rootDir()}
+	selfRepo = Repository{Name: "self", Path: "file://" + rootDir}
 }

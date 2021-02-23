@@ -51,11 +51,7 @@ func createCommit() (Commit, error) {
 }
 
 func takePhotosSelfRepo() ([]Photo, error) {
-	root, err := selfRepo.LocalPath()
-	if err != nil {
-		return []Photo{}, err
-	}
-	paths, err := findPaths(root, []string{".arciv"})
+	paths, err := findPaths(rootDir, []string{".arciv"})
 	if err != nil {
 		return []Photo{}, err
 	}
