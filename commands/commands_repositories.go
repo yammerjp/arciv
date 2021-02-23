@@ -34,6 +34,13 @@ func (repository Repository) String() string {
 	return repository.Name + " " + repository.Path
 }
 
+func (repository Repository) LocalPath() (string, error) {
+	if !strings.HasPrefix(repository.Path, "file:///") {
+		return "", errors.New("The repository does not have local path")
+	}
+	return repository.Path[len("file://"):], nil
+}
+
 func repositoriesAction(args []string) (err error) {
 	if len(args) == 1 && args[0] == "show" {
 		return reposShow()
@@ -68,13 +75,30 @@ func loadRepos() ([]Repository, error) {
 	}
 	var repos []Repository
 	for _, line := range lines {
+    if line == "self" {
+      repos = append(repos, Repository{Name: "self", Path: rootDir()})
+      continue
+    }
 		idx := strings.Index(line, " ")
 		if idx == -1 {
-			idx = len(line)
+      return []Repository{}, errors.New("Repository path is not registerd in .arciv/repositories")
 		}
 		repos = append(repos, Repository{Name: line[:idx], Path: line[idx+1:]})
 	}
 	return repos, nil
+}
+
+func findRepo(name string) (Repository, error) {
+	repos, err := loadRepos()
+	if err != nil {
+		return Repository{}, err
+	}
+	for _, repo := range repos {
+		if repo.Name == name {
+			return repo, nil
+		}
+	}
+	return Repository{}, errors.New("Repository is not found")
 }
 
 func reposAdd(name string, path string) error {
@@ -135,6 +159,10 @@ func reposWrite(repos []Repository) error {
 	defer file.Close()
 
 	for _, repo := range repos {
+    if repo.Name == "self" {
+      fmt.Fprintln(file, "self")
+      continue
+    }
 		fmt.Fprintln(file, repo.String())
 	}
 
