@@ -58,7 +58,7 @@ func takePhotosSelfRepo() ([]Photo, error) {
 
 	var photos []Photo
 	for _, path := range paths {
-		photo, err := takePhoto(path)
+		photo, err := takePhoto(rootDir, path)
 		if err != nil {
 			return []Photo{}, err
 		}
@@ -70,10 +70,10 @@ func takePhotosSelfRepo() ([]Photo, error) {
 	return photos, nil
 }
 
-func takePhoto(path string) (Photo, error) {
+func takePhoto(root, path string) (Photo, error) {
 	// hash
 	hasher := sha256.New()
-	f, err := os.Open(path)
+	f, err := os.Open(root+"/"+path)
 	if err != nil {
 		return Photo{}, err
 	}
@@ -85,7 +85,7 @@ func takePhoto(path string) (Photo, error) {
 	f.Close()
 
 	//timestamp
-	fileInfo, err := os.Stat(path)
+	fileInfo, err := os.Stat(root+"/"+path)
 	if err != nil {
 		return Photo{}, err
 	}
