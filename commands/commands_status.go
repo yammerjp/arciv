@@ -31,11 +31,11 @@ func statusAction() (err error) {
 		return err
 	}
 
-	commitListSelf, err := loadCommitListSelf()
+	timelineSelf, err := loadTimelineSelf()
 	if err != nil {
 		return err
 	}
-	latestCommitId := commitListSelf[len(commitListSelf)-1]
+	latestCommitId := timelineSelf[len(timelineSelf)-1]
 	latestCommitPhotos, err := loadCommit(latestCommitId)
 	if err != nil {
 		return err

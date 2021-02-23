@@ -24,10 +24,6 @@ func initAction() (err error) {
 	if err != nil {
 		return err
 	}
-	err = mkdir(".arciv/commit")
-	if err != nil {
-		return err
-	}
 	err = mkdir(".arciv/list")
 	if err != nil {
 		return err
@@ -40,7 +36,7 @@ func initAction() (err error) {
 	defer fR.Close()
 	fmt.Fprintln(fR, "self")
 
-	fC, err := os.Create(".arciv/commit/self")
+	fC, err := os.Create(".arciv/timeline")
 	if err != nil {
 		return err
 	}
