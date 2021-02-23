@@ -1,7 +1,9 @@
 package commands
 
 import (
+	"bufio"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -51,4 +53,45 @@ func findPaths(root string, skipNames []string) ([]string, error) {
 		return []string{}, err
 	}
 	return paths, nil
+}
+
+func loadLines(filepath string) ([]string, error) {
+	if !Exists(filepath) {
+		file, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			return []string{}, err
+		}
+		file.Close()
+	}
+	var lines []string
+	f, err := os.OpenFile(filepath, os.O_RDONLY, 0666)
+	if err != nil {
+		return []string{}, err
+	}
+	defer f.Close()
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		return []string{}, err
+	}
+	return lines, nil
+}
+
+func copyFile(from string, to string) error {
+	w, err := os.Create(to)
+	if err != nil {
+		return err
+	}
+	defer w.Close()
+
+	r, err := os.Open(from)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	_, err = io.Copy(w, r)
+	return err
 }

@@ -111,10 +111,10 @@ func loadRepos() ([]Repository, error) {
 				return []Repository{}, errors.New("Repositoy name is conflict in .arciv/repositories")
 			}
 		}
-    repo, err := createRepoStruct(name, url)
-    if err != nil {
-      return []Repository{}, err
-    }
+		repo, err := createRepoStruct(name, url)
+		if err != nil {
+			return []Repository{}, err
+		}
 		repos = append(repos, repo)
 	}
 	return repos, nil

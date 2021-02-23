@@ -3,7 +3,6 @@ package commands
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"io"
 	"os"
 )
 
@@ -43,23 +42,19 @@ func storeAction(args []string) (err error) {
 	}
 
 	// - store先のhashリストを取得
-	remoteHashStrings, err := fetchRepoHashs(remoteRepo)
+	remoteHashStrings, err := remoteRepo.fetchBlobHashes()
 	if err != nil {
 		return err
 	}
 
 	// - storeされていないファイルを送信する
-	//   - commit と repository の .arciv/blob のファイル一覧を比較して転送するファイルを決める
 	var photosToSend []Photo
 	for _, photo := range commit.Photos {
-		if isInclude(remoteHashStrings, photo.Hash.String()) {
-			continue
+		if !isInclude(remoteHashStrings, photo.Hash.String()) {
+			photosToSend = append(photosToSend, photo)
 		}
-		photosToSend = append(photosToSend, photo)
 	}
-
-	//   - ファイルを転送する
-	err = sendLocalBlobs(remoteRepo, photosToSend)
+	err = remoteRepo.sendLocalBlobs(photosToSend)
 	if err != nil {
 		return err
 	}
@@ -67,6 +62,7 @@ func storeAction(args []string) (err error) {
 	//   - commit を repository の list にマージする
 	//     add a commit to repoPath/.arciv/commit
 	//     commit write to repoPath/.arciv/list/[commit-id]
+	// TODO: Repository.Hogefuga() 側で存在チェックをしてくれたら、こちら側の存在チェックを削除
 	remoteTimeline, err := remoteRepo.loadTimeline()
 	if err != nil {
 		return err
@@ -75,31 +71,11 @@ func storeAction(args []string) (err error) {
 		fmt.Fprintln(os.Stderr, "The commit "+commit.Id+" already exists in the timeline of the repository "+remoteRepo.Name)
 		return nil
 	}
-	err = remoteRepo.AddTimeline(commit)
-	if err != nil {
-		return err
-	}
 	err = remoteRepo.WritePhotos(commit)
 	if err != nil {
 		return err
 	}
-	return nil
-}
-
-func fetchRepoHashs(repo Repository) ([]string, error) {
-	//   - .arciv/blob が無ければ掘る
-	repoPath, err := repo.FilePath()
-	if err != nil {
-		return []string{}, err
-	}
-	os.MkdirAll(repoPath+"/.arciv/blob", 0777)
-
-	//   - repository の .arciv/blob のファイル一覧を取得する
-	repoHashStrings, err := findPaths(repoPath+"/.arciv/blob", []string{})
-	if err != nil {
-		return []string{}, err
-	}
-	return repoHashStrings, nil
+	return remoteRepo.AddTimeline(commit)
 }
 
 func isInclude(strs []string, s string) bool {
@@ -109,38 +85,4 @@ func isInclude(strs []string, s string) bool {
 		}
 	}
 	return false
-}
-
-func sendLocalBlobs(toRepo Repository, photos []Photo) error {
-	for _, photo := range photos {
-		from := rootDir + "/" + photo.Path
-		remoteFilePath, err := toRepo.FilePath()
-		if err != nil {
-			return err
-		}
-		to := remoteFilePath + "/.arciv/blob/" + photo.Hash.String()
-		err = copyFile(from, to)
-		if err != nil {
-			return err
-		}
-		fmt.Fprintf(os.Stderr, "copied %s -> %s\n", from, to)
-	}
-	return nil
-}
-
-func copyFile(from string, to string) error {
-	w, err := os.Create(to)
-	if err != nil {
-		return err
-	}
-	defer w.Close()
-
-	r, err := os.Open(from)
-	if err != nil {
-		return err
-	}
-	defer r.Close()
-
-	_, err = io.Copy(w, r)
-	return err
 }

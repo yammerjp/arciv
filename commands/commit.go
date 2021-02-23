@@ -37,6 +37,7 @@ func createCommit() (Commit, error) {
 		Hash:      hash,
 		Photos:    photos,
 	}
+  // TODO: Commit.Hashが同じコミットが既に存在するならコミットしない
 
 	err = selfRepo.WritePhotos(commit)
 	if err != nil {

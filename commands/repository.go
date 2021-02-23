@@ -20,27 +20,21 @@ type Repository struct {
 }
 
 func (repository Repository) String() string {
-  if repository.PathType == PATH_FILE {
-	  return repository.Name + " file://" + repository.Path
-  } else {
-    Exit(errors.New("PathType Must Be PATH_FILE"), 1)
-    return ""
-  }
-}
-
-func (repository Repository) FilePath() (string, error) {
-	if repository.PathType != PATH_FILE {
-		return "", errors.New("The repository does not have local path")
+	if repository.PathType == PATH_FILE {
+		return repository.Name + " file://" + repository.Path
+	} else {
+		Exit(errors.New("PathType Must Be PATH_FILE"), 1)
+		return ""
 	}
-	return repository.Path, nil
 }
 
 func (repository Repository) AddTimeline(commit Commit) error {
-	root, err := repository.FilePath()
-	if err != nil {
-		return err
+	if repository.PathType != PATH_FILE {
+		return errors.New("Repository's PathType must be PATH_FILE")
 	}
-	file, err := os.OpenFile(root+"/.arciv/timeline", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+
+	// TODO: 既に存在していたら追記しない
+	file, err := os.OpenFile(repository.Path+"/.arciv/timeline", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		return err
 	}
@@ -50,20 +44,21 @@ func (repository Repository) AddTimeline(commit Commit) error {
 }
 
 func (repository Repository) loadTimeline() ([]string, error) {
-	repoPath, err := repository.FilePath()
-	if err != nil {
-		return []string{}, err
+	if repository.PathType != PATH_FILE {
+		return []string{}, errors.New("Repository's PathType must be PATH_FILE")
 	}
-	return loadLines(repoPath + "/.arciv/timeline")
+
+	return loadLines(repository.Path + "/.arciv/timeline")
 }
 
 func (repository Repository) WritePhotos(commit Commit) error {
-	root, err := repository.FilePath()
-	if err != nil {
-		return err
+	if repository.PathType != PATH_FILE {
+		return errors.New("Repository's PathType must be PATH_FILE")
 	}
-	os.MkdirAll(root+"/.arciv/list", 0777)
-	file, err := os.Create(root + "/.arciv/list/" + commit.Id)
+
+	// TODO:既に同名のファイルが存在したら書き込む必要はない
+	os.MkdirAll(repository.Path+"/.arciv/list", 0777)
+	file, err := os.Create(repository.Path + "/.arciv/list/" + commit.Id)
 	if err != nil {
 		return err
 	}
@@ -78,11 +73,11 @@ func (repository Repository) WritePhotos(commit Commit) error {
 }
 
 func (repository Repository) loadPhotos(commitId string) (photos []Photo, err error) {
-	root, err := repository.FilePath()
-	if err != nil {
-		return []Photo{}, err
+	if repository.PathType != PATH_FILE {
+		return []Photo{}, errors.New("Repository's PathType must be PATH_FILE")
 	}
-	f, err := os.Open(root + "/.arciv/list/" + commitId)
+
+	f, err := os.Open(repository.Path + "/.arciv/list/" + commitId)
 	if err != nil {
 		return []Photo{}, err
 	}
@@ -98,28 +93,32 @@ func (repository Repository) loadPhotos(commitId string) (photos []Photo, err er
 	return photos, nil
 }
 
-func loadLines(filepath string) ([]string, error) {
-	if !Exists(filepath) {
-		file, err := os.OpenFile(filepath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+func (repository Repository) fetchBlobHashes() ([]string, error) {
+	if repository.PathType != PATH_FILE {
+		return []string{}, errors.New("Repository's PathType must be PATH_FILE")
+	}
+
+	//   - .arciv/blob が無ければ掘る
+	os.MkdirAll(repository.Path+"/.arciv/blob", 0777)
+	//   - repository の .arciv/blob のファイル一覧を取得する
+	return findPaths(repository.Path+"/.arciv/blob", []string{})
+}
+
+func (repository Repository) sendLocalBlobs(photos []Photo) error {
+	if repository.PathType != PATH_FILE {
+		return errors.New("Repository's PathType must be PATH_FILE")
+	}
+
+	for _, photo := range photos {
+		from := rootDir + "/" + photo.Path
+		to := repository.Path + "/.arciv/blob/" + photo.Hash.String()
+		err := copyFile(from, to)
 		if err != nil {
-			return []string{}, err
+			return err
 		}
-		file.Close()
+		fmt.Fprintf(os.Stderr, "copied %s -> %s\n", from, to)
 	}
-	var lines []string
-	f, err := os.OpenFile(filepath, os.O_RDONLY, 0666)
-	if err != nil {
-		return []string{}, err
-	}
-	defer f.Close()
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	if err := scanner.Err(); err != nil {
-		return []string{}, err
-	}
-	return lines, nil
+	return nil
 }
 
 var selfRepo Repository
