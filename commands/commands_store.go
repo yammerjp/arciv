@@ -63,7 +63,7 @@ func storeAction(args []string) (err error) {
 	//     add a commit to repoPath/.arciv/commit
 	//     commit write to repoPath/.arciv/list/[commit-id]
 	// TODO: Repository.Hogefuga() 側で存在チェックをしてくれたら、こちら側の存在チェックを削除
-	remoteTimeline, err := remoteRepo.loadTimeline()
+	remoteTimeline, err := remoteRepo.LoadTimeline()
 	if err != nil {
 		return err
 	}

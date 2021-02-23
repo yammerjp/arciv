@@ -95,3 +95,8 @@ func copyFile(from string, to string) error {
 	_, err = io.Copy(w, r)
 	return err
 }
+
+func Exists(filename string) bool {
+	_, err := os.Stat(filename)
+	return err == nil
+}

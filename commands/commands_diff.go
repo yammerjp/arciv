@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
-	"os"
 	"strings"
 )
 
@@ -29,7 +28,7 @@ func diffAction(args []string) (err error) {
 	if len(args) != 2 {
 		return errors.New("Usage: arciv diff [commit-id] [commit-id]")
 	}
-	timelineSelf, err := selfRepo.loadTimeline()
+	timelineSelf, err := selfRepo.LoadTimeline()
 	if err != nil {
 		return err
 	}
@@ -44,11 +43,11 @@ func diffAction(args []string) (err error) {
 	if commitId0 == commitId1 {
 		return errors.New("Same commit")
 	}
-	photos0, err := selfRepo.loadPhotos(commitId0)
+	photos0, err := selfRepo.LoadPhotos(commitId0)
 	if err != nil {
 		return err
 	}
-	photos1, err := selfRepo.loadPhotos(commitId1)
+	photos1, err := selfRepo.LoadPhotos(commitId1)
 	if err != nil {
 		return err
 	}
@@ -79,11 +78,6 @@ func findCommitId(alias string, commitIds []string) (foundCId string, err error)
 	}
 	return foundCId, nil
 
-}
-
-func Exists(filename string) bool {
-	_, err := os.Stat(filename)
-	return err == nil
 }
 
 func diffPhotos(photosBefore, photosAfter []Photo) (deleted []Photo, added []Photo) {

@@ -27,7 +27,7 @@ func genPhoto(line string) (Photo, error) {
 	if err != nil {
 		return Photo{}, err
 	}
-	timestamp, err := strconv.ParseInt(line[65:73], 16, 64)
+	timestamp, err := genTimestamp(line[65:73])
 	if err != nil {
 		return Photo{}, err
 	}
@@ -36,6 +36,10 @@ func genPhoto(line string) (Photo, error) {
 		Hash:      hash,
 		Timestamp: timestamp,
 	}, nil
+}
+
+func genTimestamp(str string) (int64, error) {
+	return strconv.ParseInt(str, 16, 64)
 }
 
 func comparePhoto(p0, p1 Photo) int {

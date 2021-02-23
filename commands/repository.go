@@ -43,7 +43,7 @@ func (repository Repository) AddTimeline(commit Commit) error {
 	return nil
 }
 
-func (repository Repository) loadTimeline() ([]string, error) {
+func (repository Repository) LoadTimeline() ([]string, error) {
 	if repository.PathType != PATH_FILE {
 		return []string{}, errors.New("Repository's PathType must be PATH_FILE")
 	}
@@ -72,7 +72,23 @@ func (repository Repository) WritePhotos(commit Commit) error {
 	return nil
 }
 
-func (repository Repository) loadPhotos(commitId string) (photos []Photo, err error) {
+func (repository Repository) LoadCommit(commitId string) (Commit, error) {
+	photos, err := repository.LoadPhotos(commitId)
+	if err != nil {
+		return Commit{}, err
+	}
+	timestamp, err := genTimestamp(commitId[:8])
+	if err != nil {
+		return Commit{}, err
+	}
+	hash, err := hex2hash(commitId[9:])
+	if err != nil {
+		return Commit{}, err
+	}
+	return Commit{Id: commitId, Timestamp: timestamp, Hash: hash, Photos: photos}, nil
+}
+
+func (repository Repository) LoadPhotos(commitId string) (photos []Photo, err error) {
 	if repository.PathType != PATH_FILE {
 		return []Photo{}, errors.New("Repository's PathType must be PATH_FILE")
 	}

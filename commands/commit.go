@@ -37,7 +37,17 @@ func createCommit() (Commit, error) {
 		Hash:      hash,
 		Photos:    photos,
 	}
-  // TODO: Commit.Hashが同じコミットが既に存在するならコミットしない
+
+	commitIds, err := selfRepo.LoadTimeline()
+	if err != nil {
+		return Commit{}, err
+	}
+	for _, cId := range commitIds {
+		if cId[9:] == commit.Hash.String() {
+			fmt.Fprintln(os.Stderr, "Does not commit. A commit that same directory structure already exists")
+			return selfRepo.LoadCommit(cId)
+		}
+	}
 
 	err = selfRepo.WritePhotos(commit)
 	if err != nil {
