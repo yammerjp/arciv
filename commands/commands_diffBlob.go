@@ -35,7 +35,7 @@ func diffBlobAction(args []string) (err error) {
 	if len(args) != 2 {
 		return errors.New("Usage: arciv diff-blob [commit-id] [commit-id]")
 	}
-	timelineSelf, err := loadTimelineSelf()
+	timelineSelf, err := loadTimeline("self")
 	if err != nil {
 		return err
 	}

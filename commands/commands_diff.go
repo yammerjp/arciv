@@ -30,7 +30,7 @@ func diffAction(args []string) (err error) {
 	if len(args) != 2 {
 		return errors.New("Usage: arciv diff [commit-id] [commit-id]")
 	}
-	timelineSelf, err := loadTimelineSelf()
+	timelineSelf, err := loadTimeline("self")
 	if err != nil {
 		return err
 	}
@@ -82,8 +82,16 @@ func findCommitId(alias string, commitIds []string) (foundCId string, err error)
 
 }
 
-func loadTimelineSelf() ([]string, error) {
-	return loadLines(rootDir() + "/.arciv/timeline")
+func loadTimeline(repoName string) ([]string, error) {
+	repo, err := findRepo(repoName)
+	if err != nil {
+		return []string{}, err
+	}
+	repoPath, err := repo.LocalPath()
+	if err != nil {
+		return []string{}, err
+	}
+	return loadLines(repoPath + "/.arciv/timeline")
 }
 
 func loadLines(filepath string) ([]string, error) {

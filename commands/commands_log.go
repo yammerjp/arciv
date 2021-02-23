@@ -20,7 +20,7 @@ func logCommand(cmd *cobra.Command, args []string) {
 
 func logAction() (err error) {
 
-	timeline, err := loadTimelineSelf()
+	timeline, err := loadTimeline("self")
 	if err != nil {
 		return err
 	}

@@ -31,7 +31,7 @@ func statusAction() (err error) {
 		return err
 	}
 
-	timelineSelf, err := loadTimelineSelf()
+	timelineSelf, err := loadTimeline("self")
 	if err != nil {
 		return err
 	}

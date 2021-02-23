@@ -25,22 +25,6 @@ func init() {
 	RootCmd.AddCommand(repositoriesCmd)
 }
 
-type Repository struct {
-	Name string
-	Path string
-}
-
-func (repository Repository) String() string {
-	return repository.Name + " " + repository.Path
-}
-
-func (repository Repository) LocalPath() (string, error) {
-	if !strings.HasPrefix(repository.Path, "file:///") {
-		return "", errors.New("The repository does not have local path")
-	}
-	return repository.Path[len("file://"):], nil
-}
-
 func repositoriesAction(args []string) (err error) {
 	if len(args) == 1 && args[0] == "show" {
 		return reposShow()
@@ -121,14 +105,8 @@ func reposAdd(name string, path string) error {
 			return errors.New("The repository name already exists")
 		}
 	}
-	file, err := os.OpenFile(rootDir()+"/.arciv/repositories", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	fmt.Fprintln(file, Repository{Name: name, Path: path}.String())
-	return nil
+	repos = append(repos, Repository{Name: name, Path: path})
+	return reposWrite(repos)
 }
 
 func reposRemove(name string) error {
