@@ -1,13 +1,10 @@
 package commands
 
 import (
-	"bufio"
 	"bytes"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 var (
@@ -28,10 +25,6 @@ func init() {
 }
 
 func diffBlobAction(args []string) (err error) {
-	// fetch commit list
-	// load photos of latest commit
-	// read blob list
-	// diff blob list and commit
 	if len(args) != 2 {
 		return errors.New("Usage: arciv diff-blob [commit-id] [commit-id]")
 	}
@@ -50,72 +43,50 @@ func diffBlobAction(args []string) (err error) {
 	if cId0 == cId1 {
 		return errors.New("Same commit")
 	}
+	c0, err := loadCommit(cId0)
+	if err != nil {
+		return err
+	}
+	c1, err := loadCommit(cId1)
+	if err != nil {
+		return err
+	}
 
-	root := rootDir()
-	hashes0, err := loadHashes(root + "/.arciv/list/" + cId0)
-	if err != nil {
-		return err
-	}
-	hashes1, err := loadHashes(root + "/.arciv/list/" + cId1)
-	if err != nil {
-		return err
-	}
-	deleted, added := diffHashes(hashes0, hashes1)
+	deleted, added := diffHashes(c0, c1)
 	printDiffHashes(deleted, added)
 
 	return nil
 }
 
-func printDiffHashes(deleted, added []Hash) {
-	for _, b := range deleted {
-		fmt.Println("\x1b[31m" + "- " + hex.EncodeToString(b) + "\x1b[0m")
+func printDiffHashes(deleted, added []Photo) {
+	for _, photo := range deleted {
+		fmt.Println("\x1b[31m" + "- " + photo.Hash.String() + "\x1b[0m")
 	}
-	for _, b := range added {
-		fmt.Println("\x1b[32m" + "+ " + hex.EncodeToString(b) + "\x1b[0m")
+	for _, photo := range added {
+		fmt.Println("\x1b[32m" + "+ " + photo.Hash.String() + "\x1b[0m")
 	}
 }
 
-func loadHashes(path string) (hashes []Hash, err error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return []Hash{}, err
-	}
-	defer f.Close()
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if len(line) < 64 {
-			return []Hash{}, errors.New("Failed to load hash from a file")
-		}
-		hash, err := hex2hash(line[:64])
-		if err != nil {
-			return []Hash{}, err
-		}
-		hashes = append(hashes, hash)
-	}
-	return hashes, nil
-}
-
-func diffHashes(hashesBefore, hashesAfter []Hash) (deleted []Hash, added []Hash) {
+func diffHashes(photosBefore, photosAfter []Photo) (deleted, added []Photo) {
 	ib, ia := 0, 0
-	for ib < len(hashesBefore) && ia < len(hashesAfter) {
-		compared := bytes.Compare(hashesBefore[ib], hashesAfter[ia])
+	for ib < len(photosBefore) && ia < len(photosAfter) {
+		compared := bytes.Compare(photosBefore[ib].Hash, photosAfter[ia].Hash)
 		if compared == 0 {
 			ib++
 			ia++
 		} else if compared < 0 {
-			deleted = append(deleted, hashesBefore[ib])
+			deleted = append(deleted, photosBefore[ib])
 			ib++
 		} else {
-			added = append(added, hashesAfter[ia])
+			added = append(added, photosAfter[ia])
 			ia++
 		}
 	}
-	for _, hash := range hashesBefore[ib:] {
-		deleted = append(deleted, hash)
+	for _, photo := range photosBefore[ib:] {
+		deleted = append(deleted, photo)
 	}
-	for _, hash := range hashesAfter[ia:] {
-		added = append(added, hash)
+	for _, photo := range photosAfter[ia:] {
+		added = append(added, photo)
 	}
 	return deleted, added
 }
