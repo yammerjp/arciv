@@ -76,7 +76,7 @@ func storeAction(args []string) (err error) {
 		return err
 	}
 	if isInclude(remoteTimeline, commit.Id) {
-		fmt.Fprintln(os.Stderr, "The commit %s already exists in the timeline of the repository %s", commit.Id, remoteRepo.Name)
+		fmt.Fprintln(os.Stderr, "The commit "+commit.Id+" already exists in the timeline of the repository "+remoteRepo.Name)
 		return nil
 	}
 	err = commit.AddTimeline(remoteRoot)
