@@ -57,7 +57,7 @@ func loadRepos() ([]Repository, error) {
 	if err != nil {
 		return []Repository{}, err
 	}
-	repos := []Repository{{Name: "self", Path: "file://" + rootDir()}}
+	repos := []Repository{selfRepo}
 	for _, line := range lines {
 		idx := strings.Index(line, " ")
 		if idx == -1 {

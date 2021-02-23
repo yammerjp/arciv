@@ -42,7 +42,7 @@ func createCommitStruct(photos []Photo) (Commit, error) {
 	if err != nil {
 		return Commit{}, err
 	}
-	err = c.AddTimelineSelf()
+	err = selfRepo.AddTimeline(c)
 	if err != nil {
 		return Commit{}, err
 	}
@@ -55,19 +55,6 @@ func calcHash(photos []Photo) Hash {
 		fmt.Fprintln(hasher, photo.String())
 	}
 	return hasher.Sum(nil)
-}
-
-func (commit Commit) AddTimelineSelf() error {
-	return commit.AddTimeline(rootDir())
-}
-func (commit Commit) AddTimeline(root string) error {
-	file, err := os.OpenFile(root+"/.arciv/timeline", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	fmt.Fprintln(file, commit.Id)
-	return nil
 }
 
 func (commit Commit) WritePhotosSelf() error {

@@ -31,7 +31,7 @@ func statusAction() (err error) {
 		return err
 	}
 
-	timelineSelf, err := loadTimeline("self")
+	timelineSelf, err := selfRepo.loadTimeline()
 	if err != nil {
 		return err
 	}

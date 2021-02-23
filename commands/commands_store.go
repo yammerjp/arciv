@@ -71,7 +71,7 @@ func storeAction(args []string) (err error) {
 	//   - commit を repository の list にマージする
 	//     add a commit to repoPath/.arciv/commit
 	//     commit write to repoPath/.arciv/list/[commit-id]
-	remoteTimeline, err := loadTimeline(remoteRepo.Name)
+	remoteTimeline, err := remoteRepo.loadTimeline()
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func storeAction(args []string) (err error) {
 		fmt.Fprintln(os.Stderr, "The commit "+commit.Id+" already exists in the timeline of the repository "+remoteRepo.Name)
 		return nil
 	}
-	err = commit.AddTimeline(remoteRoot)
+	err = remoteRepo.AddTimeline(commit)
 	if err != nil {
 		return err
 	}
