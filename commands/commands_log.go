@@ -20,11 +20,11 @@ func logCommand(cmd *cobra.Command, args []string) {
 
 func logAction() (err error) {
 
-	commitList, err := loadCommitListSelf()
+	timeline, err := loadTimelineSelf()
 	if err != nil {
 		return err
 	}
-	for _, cId := range commitList {
+	for _, cId := range timeline {
 		fmt.Println(cId)
 	}
 

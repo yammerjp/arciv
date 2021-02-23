@@ -35,15 +35,15 @@ func diffBlobAction(args []string) (err error) {
 	if len(args) != 2 {
 		return errors.New("Usage: arciv diff-blob [commit-id] [commit-id]")
 	}
-	commitListSelf, err := loadCommitListSelf()
+	timelineSelf, err := loadTimelineSelf()
 	if err != nil {
 		return err
 	}
-	cId0, err := findCommitId(args[0], commitListSelf)
+	cId0, err := findCommitId(args[0], timelineSelf)
 	if err != nil {
 		return err
 	}
-	cId1, err := findCommitId(args[1], commitListSelf)
+	cId1, err := findCommitId(args[1], timelineSelf)
 	if err != nil {
 		return err
 	}

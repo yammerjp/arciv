@@ -30,15 +30,15 @@ func diffAction(args []string) (err error) {
 	if len(args) != 2 {
 		return errors.New("Usage: arciv diff [commit-id] [commit-id]")
 	}
-	commitListSelf, err := loadCommitListSelf()
+	timelineSelf, err := loadTimelineSelf()
 	if err != nil {
 		return err
 	}
-	cId0, err := findCommitId(args[0], commitListSelf)
+	cId0, err := findCommitId(args[0], timelineSelf)
 	if err != nil {
 		return err
 	}
-	cId1, err := findCommitId(args[1], commitListSelf)
+	cId1, err := findCommitId(args[1], timelineSelf)
 	if err != nil {
 		return err
 	}
@@ -82,8 +82,8 @@ func findCommitId(alias string, commitIds []string) (foundCId string, err error)
 
 }
 
-func loadCommitListSelf() ([]string, error) {
-	return loadLines(rootDir() + "/.arciv/commit/self")
+func loadTimelineSelf() ([]string, error) {
+	return loadLines(rootDir() + "/.arciv/timeline")
 }
 
 func loadLines(filepath string) ([]string, error) {
@@ -120,25 +120,25 @@ func loadCommit(commitId string) (photos []Photo, err error) {
 	return photos, nil
 }
 
-func diffPhotos(commitListBefore, commitListAfter []Photo) (deleted []Photo, added []Photo) {
+func diffPhotos(photosBefore, photosAfter []Photo) (deleted []Photo, added []Photo) {
 	ib, ia := 0, 0
-	for ib < len(commitListBefore) && ia < len(commitListAfter) {
-		compared := comparePhoto(commitListBefore[ib], commitListAfter[ia])
+	for ib < len(photosBefore) && ia < len(photosAfter) {
+		compared := comparePhoto(photosBefore[ib], photosAfter[ia])
 		if compared == 0 {
 			ib++
 			ia++
 		} else if compared < 0 {
-			deleted = append(deleted, commitListBefore[ib])
+			deleted = append(deleted, photosBefore[ib])
 			ib++
 		} else {
-			added = append(added, commitListAfter[ia])
+			added = append(added, photosAfter[ia])
 			ia++
 		}
 	}
-	for _, c := range commitListBefore[ib:] {
+	for _, c := range photosBefore[ib:] {
 		deleted = append(deleted, c)
 	}
-	for _, c := range commitListAfter[ia:] {
+	for _, c := range photosAfter[ia:] {
 		added = append(added, c)
 	}
 	return deleted, added
