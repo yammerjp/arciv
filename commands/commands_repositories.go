@@ -73,17 +73,21 @@ func loadRepos() ([]Repository, error) {
 	if err != nil {
 		return []Repository{}, err
 	}
-	var repos []Repository
+  repos := []Repository{{Name: "self", Path: "file://"+rootDir()}}
 	for _, line := range lines {
-    if line == "self" {
-      repos = append(repos, Repository{Name: "self", Path: rootDir()})
-      continue
-    }
 		idx := strings.Index(line, " ")
 		if idx == -1 {
       return []Repository{}, errors.New("Repository path is not registerd in .arciv/repositories")
 		}
-		repos = append(repos, Repository{Name: line[:idx], Path: line[idx+1:]})
+    name := line[:idx]
+    path := line[idx+1:]
+
+    for _, repo := range repos {
+      if repo.Name == name {
+        return []Repository{}, errors.New("Repositoy name is conflict in .arciv/repositories")
+      }
+    }
+		repos = append(repos, Repository{Name: name, Path: path})
 	}
 	return repos, nil
 }
@@ -160,7 +164,7 @@ func reposWrite(repos []Repository) error {
 
 	for _, repo := range repos {
     if repo.Name == "self" {
-      fmt.Fprintln(file, "self")
+      // Do not write out self
       continue
     }
 		fmt.Fprintln(file, repo.String())
