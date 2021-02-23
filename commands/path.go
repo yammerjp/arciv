@@ -8,6 +8,7 @@ import (
 )
 
 var rootDir string
+
 func init() {
 	// find arciv's root directory (exist .arciv)
 	// ex . current dir is /hoge/fuga/wara
@@ -15,7 +16,7 @@ func init() {
 	currentDir, _ := os.Getwd()
 	for dir := currentDir; strings.LastIndex(dir, "/") != -1; dir = dir[:strings.LastIndex(dir, "/")] {
 		if f, err := os.Stat(dir + "/.arciv"); !os.IsNotExist(err) && f.IsDir() {
-      rootDir = dir
+			rootDir = dir
 			return
 		}
 	}

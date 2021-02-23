@@ -27,13 +27,13 @@ func init() {
 
 func repositoriesAction(args []string) (err error) {
 	if len(args) == 1 && args[0] == "show" {
-		return reposShow()
+		return repositoriesActionShow()
 	}
 	if len(args) == 3 && args[0] == "add" {
-		return reposAdd(args[1], args[2])
+		return repositoriesActionAdd(args[1], args[2])
 	}
 	if len(args) == 2 && args[0] == "remove" {
-		return reposRemove(args[1])
+		return repositoriesActionRemove(args[1])
 	}
 	fmt.Fprintln(os.Stderr, "Usage: arciv repositoreis show")
 	fmt.Fprintln(os.Stderr, "       arciv repositoreis add [repository name] [repository path]")
@@ -41,7 +41,7 @@ func repositoriesAction(args []string) (err error) {
 	return nil
 }
 
-func reposShow() error {
+func repositoriesActionShow() error {
 	repos, err := loadRepos()
 	if err != nil {
 		return err
@@ -52,64 +52,28 @@ func reposShow() error {
 	return nil
 }
 
-func loadRepos() ([]Repository, error) {
-	lines, err := loadLines(rootDir + "/.arciv/repositories")
-	if err != nil {
-		return []Repository{}, err
-	}
-	repos := []Repository{selfRepo}
-	for _, line := range lines {
-		idx := strings.Index(line, " ")
-		if idx == -1 {
-			return []Repository{}, errors.New("Repository path is not registerd in .arciv/repositories")
-		}
-		name := line[:idx]
-		path := line[idx+1:]
-
-		for _, repo := range repos {
-			if repo.Name == name {
-				return []Repository{}, errors.New("Repositoy name is conflict in .arciv/repositories")
-			}
-		}
-		repos = append(repos, Repository{Name: name, Path: path})
-	}
-	return repos, nil
-}
-
-func findRepo(name string) (Repository, error) {
-	repos, err := loadRepos()
-	if err != nil {
-		return Repository{}, err
-	}
-	for _, repo := range repos {
-		if repo.Name == name {
-			return repo, nil
-		}
-	}
-	return Repository{}, errors.New("Repository is not found")
-}
-
-func reposAdd(name string, path string) error {
+func repositoriesActionAdd(name string, url string) error {
 	if strings.Index(name, " ") != -1 {
 		return errors.New("Repository name must not include space")
-	}
-	if !strings.HasPrefix(path, "file:///") {
-		return errors.New("Repository path must be file:///...")
 	}
 	repos, err := loadRepos()
 	if err != nil {
 		return err
 	}
-	for _, repo := range repos {
-		if repo.Name == name {
+	for _, r := range repos {
+		if r.Name == name {
 			return errors.New("The repository name already exists")
 		}
 	}
-	repos = append(repos, Repository{Name: name, Path: path})
+	repo, err := createRepoStruct(name, url)
+	if err != nil {
+		return err
+	}
+	repos = append(repos, repo)
 	return reposWrite(repos)
 }
 
-func reposRemove(name string) error {
+func repositoriesActionRemove(name string) error {
 	if name == "self" {
 		return errors.New("self must be exist")
 	}
@@ -126,6 +90,59 @@ func reposRemove(name string) error {
 		return reposWrite(repos)
 	}
 	return errors.New("The repository is not found")
+}
+
+func loadRepos() ([]Repository, error) {
+	lines, err := loadLines(rootDir + "/.arciv/repositories")
+	if err != nil {
+		return []Repository{}, err
+	}
+	repos := []Repository{selfRepo}
+	for _, line := range lines {
+		idx := strings.Index(line, " ")
+		if idx == -1 {
+			return []Repository{}, errors.New("Repository path is not registerd in .arciv/repositories")
+		}
+		name := line[:idx]
+		url := line[idx+1:]
+
+		for _, r := range repos {
+			if r.Name == name {
+				return []Repository{}, errors.New("Repositoy name is conflict in .arciv/repositories")
+			}
+		}
+    repo, err := createRepoStruct(name, url)
+    if err != nil {
+      return []Repository{}, err
+    }
+		repos = append(repos, repo)
+	}
+	return repos, nil
+}
+
+func createRepoStruct(name string, url string) (Repository, error) {
+	var path string
+	var pathType PathType
+	if strings.HasPrefix(url, "file://") {
+		path = url[len("file://"):]
+		pathType = PATH_FILE
+	} else {
+		return Repository{}, errors.New("Repository path must be file:///...")
+	}
+	return Repository{Name: name, Path: path, PathType: pathType}, nil
+}
+
+func findRepo(name string) (Repository, error) {
+	repos, err := loadRepos()
+	if err != nil {
+		return Repository{}, err
+	}
+	for _, repo := range repos {
+		if repo.Name == name {
+			return repo, nil
+		}
+	}
+	return Repository{}, errors.New("Repository is not found")
 }
 
 func reposWrite(repos []Repository) error {
@@ -147,7 +164,7 @@ func reposWrite(repos []Repository) error {
 		fmt.Fprintln(file, repo.String())
 	}
 
-	err = os.Remove(rootDir+"/.arciv/repositories.org")
+	err = os.Remove(rootDir + "/.arciv/repositories.org")
 	if err != nil {
 		return err
 	}

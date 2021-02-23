@@ -5,23 +5,34 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
+)
+
+type PathType int
+
+const (
+	PATH_FILE PathType = 0
 )
 
 type Repository struct {
-	Name string
-	Path string
+	Name     string
+	Path     string
+	PathType PathType
 }
 
 func (repository Repository) String() string {
-	return repository.Name + " " + repository.Path
+  if repository.PathType == PATH_FILE {
+	  return repository.Name + " file://" + repository.Path
+  } else {
+    Exit(errors.New("PathType Must Be PATH_FILE"), 1)
+    return ""
+  }
 }
 
 func (repository Repository) FilePath() (string, error) {
-	if !strings.HasPrefix(repository.Path, "file:///") {
+	if repository.PathType != PATH_FILE {
 		return "", errors.New("The repository does not have local path")
 	}
-	return repository.Path[len("file://"):], nil
+	return repository.Path, nil
 }
 
 func (repository Repository) AddTimeline(commit Commit) error {
@@ -114,5 +125,5 @@ func loadLines(filepath string) ([]string, error) {
 var selfRepo Repository
 
 func init() {
-	selfRepo = Repository{Name: "self", Path: "file://" + rootDir}
+	selfRepo = Repository{Name: "self", Path: rootDir, PathType: PATH_FILE}
 }
