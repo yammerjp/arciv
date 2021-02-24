@@ -78,6 +78,9 @@ func (repository Repository) LoadLatestCommitId() (string, error) {
 	if err != nil {
 		return "", err
 	}
+  if len(timeline) == 0 {
+    return "", errors.New("Commit does not exists")
+  }
 	return timeline[len(timeline)-1], nil
 }
 
