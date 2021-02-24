@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 )
 
 type PathType int
@@ -72,6 +73,14 @@ func (repository Repository) WritePhotos(commit Commit) error {
 	return nil
 }
 
+func (repository Repository) LoadLatestCommitId() (string, error) {
+	timeline, err := repository.LoadTimeline()
+	if err != nil {
+		return "", err
+	}
+	return timeline[len(timeline)-1], nil
+}
+
 func (repository Repository) LoadCommitFromAlias(alias string) (Commit, error) {
 	timeline, err := repository.LoadTimeline()
 	if err != nil {
@@ -121,7 +130,7 @@ func (repository Repository) LoadPhotos(commitId string) (photos []Photo, err er
 	return photos, nil
 }
 
-func (repository Repository) fetchBlobHashes() ([]string, error) {
+func (repository Repository) FetchBlobHashes() ([]string, error) {
 	if repository.PathType != PATH_FILE {
 		return []string{}, errors.New("Repository's PathType must be PATH_FILE")
 	}
@@ -129,7 +138,7 @@ func (repository Repository) fetchBlobHashes() ([]string, error) {
 	//   - .arciv/blob が無ければ掘る
 	os.MkdirAll(repository.Path+"/.arciv/blob", 0777)
 	//   - repository の .arciv/blob のファイル一覧を取得する
-	return findPaths(repository.Path+"/.arciv/blob", []string{})
+	return findPaths(repository.Path+"/.arciv/blob", []string{}, false)
 }
 
 func (repository Repository) sendLocalBlobs(photos []Photo) error {
@@ -147,6 +156,46 @@ func (repository Repository) sendLocalBlobs(photos []Photo) error {
 		fmt.Fprintf(os.Stderr, "copied %s -> %s\n", from, to)
 	}
 	return nil
+}
+
+func (repository Repository) ReceiveRemoteBlobs(photos []Photo) error {
+	if repository.PathType != PATH_FILE {
+		return errors.New("Repository's PathType must be PATH_FILE")
+	}
+
+	for _, photo := range photos {
+		from := repository.Path + "/.arciv/blob/" + photo.Hash.String()
+		to := rootDir + "/.arciv/blob/" + photo.Hash.String()
+		err := copyFile(from, to)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(os.Stderr, "copied %s -> %s\n", from, to)
+	}
+	return nil
+}
+
+func findCommitId(alias string, commitIds []string) (foundCId string, err error) {
+	foundCId = ""
+	if alias == "" {
+		return "", errors.New("Empty commit id is spacified")
+	}
+
+	for _, cId := range commitIds {
+		fullhit := strings.HasPrefix(cId, alias)
+		hashhit := strings.HasPrefix(cId[9:], alias)
+		if !fullhit && !hashhit {
+			continue
+		}
+		if foundCId != "" {
+			return "", errors.New("The alias refer to more than 1 commit")
+		}
+		foundCId = cId
+	}
+	if foundCId == "" {
+		return "", errors.New("Commit is not found")
+	}
+	return foundCId, nil
 }
 
 var selfRepo Repository

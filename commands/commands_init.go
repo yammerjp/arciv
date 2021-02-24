@@ -34,7 +34,6 @@ func initAction() (err error) {
 		return err
 	}
 	defer fR.Close()
-	fmt.Fprintln(fR, "self")
 
 	fC, err := os.Create(".arciv/timeline")
 	if err != nil {

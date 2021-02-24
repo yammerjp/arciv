@@ -26,7 +26,7 @@ func init() {
 	return
 }
 
-func findPaths(root string, skipNames []string) ([]string, error) {
+func findPaths(root string, skipNames []string, includesDir bool) ([]string, error) {
 	var paths []string
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -42,7 +42,7 @@ func findPaths(root string, skipNames []string) ([]string, error) {
 			}
 			return nil
 		}
-		if !info.IsDir() {
+		if (includesDir || !info.IsDir()) && len(root) < len(path) {
 			// add relative path from root directory
 			paths = append(paths, path[len(root)+1:])
 		}

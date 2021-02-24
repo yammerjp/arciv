@@ -17,25 +17,9 @@ type Commit struct {
 }
 
 func createCommit() (Commit, error) {
-	// Photos
-	photos, err := takePhotosSelfRepo()
+	commit, err := createCommitStructure()
 	if err != nil {
 		return Commit{}, err
-	}
-	// Hash
-	hasher := sha256.New()
-	for _, photo := range photos {
-		fmt.Fprintln(hasher, photo.String())
-	}
-	hash := Hash(hasher.Sum(nil))
-	// Timestamp
-	timestamp := time.Now().Unix()
-
-	commit := Commit{
-		Id:        fmt.Sprintf("%.8x", timestamp) + "-" + hash.String(),
-		Timestamp: timestamp,
-		Hash:      hash,
-		Photos:    photos,
 	}
 
 	commitIds, err := selfRepo.LoadTimeline()
@@ -61,8 +45,31 @@ func createCommit() (Commit, error) {
 	return commit, nil
 }
 
+func createCommitStructure() (Commit, error) {
+	// Photos
+	photos, err := takePhotosSelfRepo()
+	if err != nil {
+		return Commit{}, err
+	}
+	// Hash
+	hasher := sha256.New()
+	for _, photo := range photos {
+		fmt.Fprintln(hasher, photo.String())
+	}
+	hash := Hash(hasher.Sum(nil))
+	// Timestamp
+	timestamp := time.Now().Unix()
+
+	return Commit{
+		Id:        fmt.Sprintf("%.8x", timestamp) + "-" + hash.String(),
+		Timestamp: timestamp,
+		Hash:      hash,
+		Photos:    photos,
+	}, nil
+}
+
 func takePhotosSelfRepo() ([]Photo, error) {
-	paths, err := findPaths(rootDir, []string{".arciv"})
+	paths, err := findPaths(rootDir, []string{".arciv"}, false)
 	if err != nil {
 		return []Photo{}, err
 	}

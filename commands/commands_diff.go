@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
-	"strings"
 )
 
 var (
@@ -28,56 +27,19 @@ func diffAction(args []string) (err error) {
 	if len(args) != 2 {
 		return errors.New("Usage: arciv diff [commit-id] [commit-id]")
 	}
-	timelineSelf, err := selfRepo.LoadTimeline()
+	commit0, err := selfRepo.LoadCommitFromAlias(args[0])
 	if err != nil {
 		return err
 	}
-	commitId0, err := findCommitId(args[0], timelineSelf)
+	commit1, err := selfRepo.LoadCommitFromAlias(args[1])
 	if err != nil {
 		return err
 	}
-	commitId1, err := findCommitId(args[1], timelineSelf)
-	if err != nil {
-		return err
-	}
-	if commitId0 == commitId1 {
+	if commit0.Id == commit1.Id {
 		return errors.New("Same commit")
 	}
-	photos0, err := selfRepo.LoadPhotos(commitId0)
-	if err != nil {
-		return err
-	}
-	photos1, err := selfRepo.LoadPhotos(commitId1)
-	if err != nil {
-		return err
-	}
-
-	printDiffs(diffPhotos(photos0, photos1))
+	printDiffs(diffPhotos(commit0.Photos, commit1.Photos))
 	return nil
-}
-
-func findCommitId(alias string, commitIds []string) (foundCId string, err error) {
-	foundCId = ""
-	if alias == "" {
-		return "", errors.New("Empty commit id is spacified")
-	}
-
-	for _, cId := range commitIds {
-		fullhit := strings.HasPrefix(cId, alias)
-		hashhit := strings.HasPrefix(cId[9:], alias)
-		if !fullhit && !hashhit {
-			continue
-		}
-		if foundCId != "" {
-			return "", errors.New("The alias refer to more than 1 commit")
-		}
-		foundCId = cId
-	}
-	if foundCId == "" {
-		return "", errors.New("Commit is not found")
-	}
-	return foundCId, nil
-
 }
 
 func diffPhotos(photosBefore, photosAfter []Photo) (deleted []Photo, added []Photo) {

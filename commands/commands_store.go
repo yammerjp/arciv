@@ -42,7 +42,7 @@ func storeAction(args []string) (err error) {
 	}
 
 	// - store先のhashリストを取得
-	remoteHashStrings, err := remoteRepo.fetchBlobHashes()
+	remoteHashStrings, err := remoteRepo.FetchBlobHashes()
 	if err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ func storeAction(args []string) (err error) {
 	// - storeされていないファイルを送信する
 	var photosToSend []Photo
 	for _, photo := range commit.Photos {
-		if !isInclude(remoteHashStrings, photo.Hash.String()) {
+		if !isIncluded(remoteHashStrings, photo.Hash.String()) {
 			photosToSend = append(photosToSend, photo)
 		}
 	}
@@ -67,7 +67,7 @@ func storeAction(args []string) (err error) {
 	if err != nil {
 		return err
 	}
-	if isInclude(remoteTimeline, commit.Id) {
+	if isIncluded(remoteTimeline, commit.Id) {
 		fmt.Fprintln(os.Stderr, "The commit "+commit.Id+" already exists in the timeline of the repository "+remoteRepo.Name)
 		return nil
 	}
@@ -78,7 +78,7 @@ func storeAction(args []string) (err error) {
 	return remoteRepo.AddTimeline(commit)
 }
 
-func isInclude(strs []string, s string) bool {
+func isIncluded(strs []string, s string) bool {
 	for _, str := range strs {
 		if str == s {
 			return true

@@ -27,15 +27,16 @@ func statusAction() (err error) {
 		return err
 	}
 
-	timelineSelf, err := selfRepo.LoadTimeline()
+	latestCommitId, err := selfRepo.LoadLatestCommitId()
 	if err != nil {
 		return err
 	}
-	latestCommitId := timelineSelf[len(timelineSelf)-1]
+
 	latestCommitPhotos, err := selfRepo.LoadPhotos(latestCommitId)
 	if err != nil {
 		return err
 	}
+
 	deleted, added := diffPhotos(latestCommitPhotos, nowPhotos)
 	printDiffs(deleted, added)
 	return nil
