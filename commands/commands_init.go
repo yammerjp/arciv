@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"fmt"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -46,7 +45,7 @@ func initAction() (err error) {
 func mkdir(path string) error {
 	err := os.Mkdir(path, 0777)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Failed to create directory '"+path+"'")
+		message("Failed to create directory '" + path + "'")
 		return err
 	}
 	return nil

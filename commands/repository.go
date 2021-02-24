@@ -2,8 +2,6 @@ package commands
 
 import (
 	"errors"
-	"fmt"
-	"os"
 	"strings"
 )
 
@@ -141,7 +139,7 @@ func (repository Repository) sendLocalBlobs(photos []Photo) error {
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(os.Stderr, "copied %s -> %s\n", from, to)
+		message("copied " + from + " -> " + to)
 	}
 	return nil
 }
@@ -158,7 +156,7 @@ func (repository Repository) ReceiveRemoteBlobs(photos []Photo) error {
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(os.Stderr, "copied %s -> %s\n", from, to)
+		message("copied " + from + " -> " + to)
 	}
 	return nil
 }

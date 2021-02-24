@@ -1,9 +1,7 @@
 package commands
 
 import (
-	"fmt"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 var (
@@ -27,7 +25,7 @@ func storeAction(args []string) (err error) {
 	// - 現在のディレクトリ構成とファイルのリストを記録 (commit)
 	//   - args[0] で指定されたrepository を取得
 	if len(args) != 1 {
-		fmt.Fprintln(os.Stderr, "Usage: arciv store [repository-name]")
+		message("Usage: arciv store [repository-name]")
 		return nil
 	}
 	remoteRepo, err := findRepo(args[0])
@@ -68,7 +66,7 @@ func storeAction(args []string) (err error) {
 		return err
 	}
 	if isIncluded(remoteTimeline, commit.Id) {
-		fmt.Fprintln(os.Stderr, "The commit "+commit.Id+" already exists in the timeline of the repository "+remoteRepo.Name)
+		message("The commit " + commit.Id + " already exists in the timeline of the repository " + remoteRepo.Name)
 		return nil
 	}
 	err = remoteRepo.WritePhotos(commit)

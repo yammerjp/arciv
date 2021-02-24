@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
-	"os"
 	"strings"
 )
 
@@ -35,9 +34,9 @@ func repositoriesAction(args []string) (err error) {
 	if len(args) == 2 && args[0] == "remove" {
 		return repositoriesActionRemove(args[1])
 	}
-	fmt.Fprintln(os.Stderr, "Usage: arciv repositoreis show")
-	fmt.Fprintln(os.Stderr, "       arciv repositoreis add [repository name] [repository path]")
-	fmt.Fprintln(os.Stderr, "       arciv repositoreis remove [repository name]")
+	message("Usage: arciv repositoreis show")
+	message("       arciv repositoreis add [repository name] [repository path]")
+	message("       arciv repositoreis remove [repository name]")
 	return nil
 }
 
@@ -146,28 +145,12 @@ func findRepo(name string) (Repository, error) {
 }
 
 func reposWrite(repos []Repository) error {
-	root := rootDir()
-	err := os.Rename(root+"/.arciv/repositories", root+"/.arciv/repositories.org")
-	if err != nil {
-		return err
-	}
-	file, err := os.OpenFile(root+"/.arciv/repositories", os.O_WRONLY|os.O_CREATE, 0666)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
+	var lines []string
 	for _, repo := range repos {
 		if repo.Name == "self" {
-			// Do not write out self
 			continue
 		}
-		fmt.Fprintln(file, repo.String())
+		lines = append(lines, repo.String())
 	}
-
-	err = os.Remove(root + "/.arciv/repositories.org")
-	if err != nil {
-		return err
-	}
-	return nil
+	return writeLines(rootDir()+"/.arciv/repositories", lines)
 }

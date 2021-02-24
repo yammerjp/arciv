@@ -29,7 +29,7 @@ func createCommit() (Commit, error) {
 	}
 	for _, cId := range commitIds {
 		if cId[9:] == commit.Hash.String() {
-			fmt.Fprintln(os.Stderr, "Committing is canceled. A commit that same directory structure already exists")
+			message("Committing is canceled. A commit that same directory structure already exists")
 			return selfRepo.LoadCommit(cId)
 		}
 	}
@@ -42,7 +42,7 @@ func createCommit() (Commit, error) {
 	if err != nil {
 		return Commit{}, err
 	}
-	fmt.Fprintln(os.Stderr, "created commit '"+commit.Id+"'")
+	message("created commit '" + commit.Id + "'")
 	return commit, nil
 }
 

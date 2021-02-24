@@ -141,3 +141,7 @@ func Exists(filename string) bool {
 	_, err := os.Stat(filename)
 	return err == nil
 }
+
+func message(str string) {
+	fmt.Fprintln(os.Stderr, str)
+}

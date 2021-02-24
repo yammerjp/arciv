@@ -2,7 +2,6 @@ package commands
 
 import (
 	"errors"
-	"fmt"
 	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
@@ -86,9 +85,9 @@ func restoreAction(args []string) (err error) {
 
 	// download
 	if dryRun {
-		fmt.Fprintln(os.Stderr, "Dry run")
+		message("Dry run")
 		for _, b := range blobsToRecieve {
-			fmt.Fprintln(os.Stderr, "Download: "+b.Hash.String())
+			message("Download: " + b.Hash.String())
 		}
 	} else {
 		err = remoteRepo.ReceiveRemoteBlobs(blobsToRecieve)
@@ -103,14 +102,14 @@ func restoreAction(args []string) (err error) {
 		from := selfRepo.Path + "/" + lPhoto.Path
 		to := selfRepo.Path + "/.arciv/blob/" + lPhoto.Hash.String()
 		if dryRun {
-			fmt.Fprintf(os.Stderr, "move %s -> %s\n", from, to)
+			message("move " + from + " -> %s" + to)
 			continue
 		}
 		err = os.Rename(from, to)
 		if err != nil {
 			return err
 		}
-		fmt.Fprintf(os.Stderr, "moved %s -> %s\n", from, to)
+		message("moved " + from + " -> %s" + to)
 	}
 
 	// remove garbages
@@ -132,7 +131,7 @@ func restoreAction(args []string) (err error) {
 		from := selfRepo.Path + "/.arciv/blob/" + rPhoto.Hash.String()
 		to := selfRepo.Path + "/" + rPhoto.Path
 		if dryRun {
-			fmt.Fprintf(os.Stderr, "move %s -> %s\n", from, to)
+			message("move " + from + " -> " + to)
 			continue
 		}
 		err = os.Rename(from, to)
@@ -147,7 +146,7 @@ func restoreAction(args []string) (err error) {
 				return err
 			}
 		}
-		fmt.Fprintf(os.Stderr, "moved %s -> %s\n", from, to)
+		message("moved " + from + " -> " + to)
 	}
 
 	if dryRun {
@@ -164,7 +163,7 @@ func restoreAction(args []string) (err error) {
 		if err != nil {
 			return err
 		}
-		fmt.Fprintln(os.Stderr, "removed %s", selfRepo.Path+"/.arciv/blob/"+blob)
+		message("removed " + selfRepo.Path + "/.arciv/blob/" + blob)
 	}
 	return nil
 	//   - restoreするcommitに必要なhashリストを確認
