@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+  "io/ioutil"
 )
 
 type PathType int
@@ -141,7 +142,17 @@ func (repository Repository) FetchBlobHashes() ([]string, error) {
 	//   - .arciv/blob が無ければ掘る
 	os.MkdirAll(repository.Path+"/.arciv/blob", 0777)
 	//   - repository の .arciv/blob のファイル一覧を取得する
-	return findPaths(repository.Path+"/.arciv/blob", []string{}, false)
+  var blobs []string
+  files, err := ioutil.ReadDir(repository.Path+"/.arciv/blob")
+  if err != nil {
+    return []string{}, err
+  }
+  for _, file := range files {
+    if !file.IsDir() {
+      blobs = append(blobs, file.Name())
+    }
+  }
+	return blobs, nil
 }
 
 func (repository Repository) sendLocalBlobs(photos []Photo) error {

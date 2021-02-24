@@ -70,15 +70,15 @@ func createCommitStructure() (Commit, error) {
 }
 
 func takePhotosSelfRepo() ([]Photo, error) {
-	root := rootDir()
-	paths, err := findPaths(root, []string{".arciv"}, false)
+  selfRepo := SelfRepo()
+	paths, err := findPathsOfSelfRepo(false)
 	if err != nil {
 		return []Photo{}, err
 	}
 
 	var photos []Photo
 	for _, path := range paths {
-		photo, err := takePhoto(root, path)
+		photo, err := takePhoto(selfRepo.Path, path)
 		if err != nil {
 			return []Photo{}, err
 		}

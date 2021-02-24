@@ -115,7 +115,7 @@ func restoreAction(args []string) (err error) {
 
 	// remove garbages
 	if !dryRun {
-		paths, err := findPaths(selfRepo.Path, []string{".arciv"}, true)
+		paths, err := findPathsOfSelfRepo(true)
 		if err != nil {
 			return err
 		}

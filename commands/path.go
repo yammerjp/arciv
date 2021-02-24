@@ -23,33 +23,34 @@ func rootDir() string {
 	return ""
 }
 
-func findPaths(root string, skipNames []string, includesDir bool) ([]string, error) {
-	var paths []string
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+func findPathsOfSelfRepo(includesDir bool) (relativePaths []string, err error) {
+  root := SelfRepo().Path
+	err = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		name := info.Name()
-		for _, sname := range skipNames {
-			if sname != name {
-				continue
-			}
-			if info.IsDir() {
-				return filepath.SkipDir
-			}
-			return nil
+    if !includesDir && info.IsDir() {
+      return nil
+    }
+		if len(root) >= len(path) {
+      // exclude root directory
+      return nil
 		}
-		if (includesDir || !info.IsDir()) && len(root) < len(path) {
-			// add relative path from root directory
-			paths = append(paths, path[len(root)+1:])
-		}
+    relativePath := path[len(root)+1:]
+    if info.IsDir() && relativePath == ".arciv" {
+      return nil
+    }
+    if strings.HasPrefix(relativePath, ".arciv/") {
+      return nil
+    }
+		// add relative path from root directory
+		relativePaths = append(relativePaths, relativePath)
 		return nil
 	})
-
 	if err != nil {
 		return []string{}, err
 	}
-	return paths, nil
+	return relativePaths, nil
 }
 
 func loadLines(filepath string) ([]string, error) {
