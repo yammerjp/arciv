@@ -2,7 +2,6 @@ package commands
 
 import (
 	"errors"
-	"fmt"
 	"github.com/spf13/cobra"
 )
 
@@ -72,37 +71,37 @@ func printDiffs(deleted, added []Photo) {
 		// same hash
 		idx := findPhotoIndex(added, dc, FIND_HASH|FIND_PATH)
 		if idx != -1 {
-			fmt.Printf("update: %s, hash: %s, timestamp: \x1b[31m%.8x\x1b[0m -> \x1b[32m%.8x\x1b[0m\n", dc.Path, dc.Hash.String(), dc.Timestamp, added[idx].Timestamp)
+			message("update: "+dc.Path+", hash: "+dc.Hash.String()+", timestamp: \x1b[31m"+timestamp2string(dc.Timestamp)+"\x1b[0m -> \x1b[32m"+timestamp2string(added[idx].Timestamp)+"\x1b[0m")
 			added = append(added[:idx], added[idx+1:]...)
 			continue
 		}
 		idx = findPhotoIndex(added, dc, FIND_HASH)
 		if idx != -1 {
-			fmt.Printf("rename: \x1b[31m%s\x1b[0m -> \x1b[32m%s\x1b[0m, hash: %s\n", dc.Path, added[idx].Path, dc.Hash.String())
+			message("rename: \x1b[31m"+dc.Path+"\x1b[0m -> \x1b[32m"+added[idx].Path+"\x1b[0m, hash: "+dc.Hash.String())
 			added = append(added[:idx], added[idx+1:]...)
 			continue
 		}
 		// same path, but not same hash
 		idx = findPhotoIndex(added, dc, FIND_PATH)
 		if idx != -1 {
-			fmt.Printf("rewrite: %s, hash: \x1b[31m%s\x1b[0m -> \x1b[32m%s\x1b[0m\n", dc.Path, dc.Hash.String(), added[idx].Hash.String())
+			message("rewrite: "+dc.Path+", hash: \x1b[31m"+dc.Hash.String()+"\x1b[0m -> \x1b[32m"+added[idx].Hash.String()+"\x1b[0m")
 			added = append(added[:idx], added[idx+1:]...)
 			continue
 		}
 		// similar photo is not found
-		fmt.Printf("\x1b[31mdeleted: %s, hash: %s\x1b[0m\n", dc.Path, dc.Hash.String())
+		message("\x1b[31mdeleted: "+dc.Path+", hash: "+dc.Hash.String()+"\x1b[0m")
 	}
 	// similar photo is not found
 	for _, ac := range added {
-		fmt.Printf("\x1b[32madded: %s, hash: %s\x1b[0m\n", ac.Path, ac.Hash.String())
+		message("\x1b[32madded: "+ac.Path+", hash: "+ac.Hash.String()+"\x1b[0m")
 	}
 }
 
 func printDiffsSimple(deleted, added []Photo) {
 	for _, c := range deleted {
-		fmt.Println("\x1b[31m" + "- " + c.String() + "\x1b[0m")
+		message("\x1b[31m" + "- " + c.String() + "\x1b[0m")
 	}
 	for _, c := range added {
-		fmt.Println("\x1b[32m" + "+ " + c.String() + "\x1b[0m")
+		message("\x1b[32m" + "+ " + c.String() + "\x1b[0m")
 	}
 }

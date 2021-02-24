@@ -2,7 +2,6 @@ package commands
 
 import (
 	"errors"
-	"fmt"
 	"github.com/spf13/cobra"
 	"strings"
 )
@@ -46,7 +45,7 @@ func repositoriesActionShow() error {
 		return err
 	}
 	for _, repo := range repos {
-		fmt.Println(repo)
+		messageStdin(repo.String())
 	}
 	return nil
 }

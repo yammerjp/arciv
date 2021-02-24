@@ -62,7 +62,7 @@ func createCommitStructure() (Commit, error) {
 	timestamp := time.Now().Unix()
 
 	return Commit{
-		Id:        fmt.Sprintf("%.8x", timestamp) + "-" + hash.String(),
+		Id:        timestamp2string(timestamp) + "-" + hash.String(),
 		Timestamp: timestamp,
 		Hash:      hash,
 		Photos:    photos,

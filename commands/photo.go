@@ -15,7 +15,7 @@ type Photo struct {
 }
 
 func (photo Photo) String() string {
-	return photo.Hash.String() + " " + fmt.Sprintf("%.8x", photo.Timestamp) + " " + photo.Path
+	return photo.Hash.String() + " " + timestamp2string(photo.Timestamp) + " " + photo.Path
 }
 
 func genPhoto(line string) (Photo, error) {
@@ -40,6 +40,10 @@ func genPhoto(line string) (Photo, error) {
 
 func genTimestamp(str string) (int64, error) {
 	return strconv.ParseInt(str, 16, 64)
+}
+
+func timestamp2string(t int64) string {
+  return fmt.Sprintf("%.8x", t)
 }
 
 func comparePhoto(p0, p1 Photo) int {

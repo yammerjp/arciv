@@ -2,7 +2,6 @@ package commands
 
 import (
 	"errors"
-	"fmt"
 	"github.com/spf13/cobra"
 )
 
@@ -59,14 +58,14 @@ func printTimeline(repo Repository) error {
 		return err
 	}
 	for _, cId := range timeline {
-		fmt.Println(cId)
+		messageStdin(cId)
 	}
 	return nil
 }
 
 func printCommit(c Commit) error {
 	for _, p := range c.Photos {
-		fmt.Println(p.String())
+		messageStdin(p.String())
 	}
 	return nil
 }
