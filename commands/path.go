@@ -109,17 +109,6 @@ func writeLines(path string, lines []string) error {
 	return nil
 }
 
-func writeLineTail(path string, line string) error {
-	os.MkdirAll(filepath.Dir(path), 0777)
-	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	fmt.Fprintln(file, line)
-	return nil
-}
-
 func copyFile(from string, to string) error {
 	w, err := os.Create(to)
 	if err != nil {
