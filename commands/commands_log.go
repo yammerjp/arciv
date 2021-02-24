@@ -20,19 +20,40 @@ func logCommand(cmd *cobra.Command, args []string) {
 }
 
 func logAction(args []string) (err error) {
-  if len(args) > 2 {
-    return errors.New("Usage: arciv log ([repository-name])")
-  }
-  var repo Repository
-  if len(args) == 0 {
-    repo = selfRepo
-  } else {
-    repo, err = findRepo(args[0])
-    if err != nil {
-      return err
-    }
-  }
+	switch len(args) {
+	case 0:
+		return printTimeline(selfRepo)
+	case 1:
+		repo, err := findRepo(args[0])
+		if err == nil {
+			return printTimeline(repo)
+		}
+		// FIXME: check error type
+		commit, err := selfRepo.LoadCommitFromAlias(args[0])
+		if err != nil {
+			return err
+		}
+		return printCommit(commit)
+	case 2:
+		repo, err := findRepo(args[0])
+		if err != nil {
+			return err
+		}
+		commit, err := repo.LoadCommitFromAlias(args[1])
+		if err != nil {
+			return err
+		}
+		return printCommit(commit)
+	default:
+		return errors.New("Usage: arciv log ([repository-name]) ([commit-alias])")
+	}
+}
 
+func init() {
+	RootCmd.AddCommand(logCmd)
+}
+
+func printTimeline(repo Repository) error {
 	timeline, err := repo.LoadTimeline()
 	if err != nil {
 		return err
@@ -40,10 +61,12 @@ func logAction(args []string) (err error) {
 	for _, cId := range timeline {
 		fmt.Println(cId)
 	}
-
 	return nil
 }
 
-func init() {
-	RootCmd.AddCommand(logCmd)
+func printCommit(c Commit) error {
+	for _, p := range c.Photos {
+		fmt.Println(p.String())
+	}
+	return nil
 }

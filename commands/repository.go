@@ -72,6 +72,18 @@ func (repository Repository) WritePhotos(commit Commit) error {
 	return nil
 }
 
+func (repository Repository) LoadCommitFromAlias(alias string) (Commit, error) {
+	timeline, err := repository.LoadTimeline()
+	if err != nil {
+		return Commit{}, err
+	}
+	commitId, err := findCommitId(alias, timeline)
+	if err != nil {
+		return Commit{}, err
+	}
+	return repository.LoadCommit(commitId)
+}
+
 func (repository Repository) LoadCommit(commitId string) (Commit, error) {
 	photos, err := repository.LoadPhotos(commitId)
 	if err != nil {
