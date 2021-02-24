@@ -1,12 +1,10 @@
 package commands
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"os"
 	"strings"
-  "io/ioutil"
 )
 
 type PathType int
@@ -36,13 +34,7 @@ func (repository Repository) AddTimeline(commit Commit) error {
 	}
 
 	// TODO: 既に存在していたら追記しない
-	file, err := os.OpenFile(repository.Path+"/.arciv/timeline", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	fmt.Fprintln(file, commit.Id)
-	return nil
+	return writeLineTail(commit.Id, repository.Path+"/.arciv/timeline")
 }
 
 func (repository Repository) LoadTimeline() ([]string, error) {
@@ -59,19 +51,11 @@ func (repository Repository) WritePhotos(commit Commit) error {
 	}
 
 	// TODO:既に同名のファイルが存在したら書き込む必要はない
-	os.MkdirAll(repository.Path+"/.arciv/list", 0777)
-	file, err := os.Create(repository.Path + "/.arciv/list/" + commit.Id)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	fw := bufio.NewWriter(file)
-	defer fw.Flush()
+	var lines []string
 	for _, photo := range commit.Photos {
-		fmt.Fprintln(fw, photo.String())
+		lines = append(lines, photo.String())
 	}
-	return nil
+	return writeLines(repository.Path+"/.arciv/list/"+commit.Id, lines)
 }
 
 func (repository Repository) LoadLatestCommitId() (string, error) {
@@ -79,9 +63,9 @@ func (repository Repository) LoadLatestCommitId() (string, error) {
 	if err != nil {
 		return "", err
 	}
-  if len(timeline) == 0 {
-    return "", errors.New("Commit does not exists")
-  }
+	if len(timeline) == 0 {
+		return "", errors.New("Commit does not exists")
+	}
 	return timeline[len(timeline)-1], nil
 }
 
@@ -98,6 +82,9 @@ func (repository Repository) LoadCommitFromAlias(alias string) (Commit, error) {
 }
 
 func (repository Repository) LoadCommit(commitId string) (Commit, error) {
+	if len(commitId) != 73 {
+		return Commit{}, errors.New("Length of a commit id must be 73.")
+	}
 	photos, err := repository.LoadPhotos(commitId)
 	if err != nil {
 		return Commit{}, err
@@ -118,14 +105,12 @@ func (repository Repository) LoadPhotos(commitId string) (photos []Photo, err er
 		return []Photo{}, errors.New("Repository's PathType must be PATH_FILE")
 	}
 
-	f, err := os.Open(repository.Path + "/.arciv/list/" + commitId)
+	lines, err := loadLines(repository.Path + "/.arciv/list/" + commitId)
 	if err != nil {
 		return []Photo{}, err
 	}
-	defer f.Close()
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		photo, err := genPhoto(scanner.Text())
+	for _, line := range lines {
+		photo, err := genPhoto(line)
 		if err != nil {
 			return []Photo{}, err
 		}
@@ -140,19 +125,8 @@ func (repository Repository) FetchBlobHashes() ([]string, error) {
 	}
 
 	//   - .arciv/blob が無ければ掘る
-	os.MkdirAll(repository.Path+"/.arciv/blob", 0777)
 	//   - repository の .arciv/blob のファイル一覧を取得する
-  var blobs []string
-  files, err := ioutil.ReadDir(repository.Path+"/.arciv/blob")
-  if err != nil {
-    return []string{}, err
-  }
-  for _, file := range files {
-    if !file.IsDir() {
-      blobs = append(blobs, file.Name())
-    }
-  }
-	return blobs, nil
+	return lsWithoutDir(repository.Path + "/.arciv/blob")
 }
 
 func (repository Repository) sendLocalBlobs(photos []Photo) error {
