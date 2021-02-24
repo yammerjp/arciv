@@ -17,6 +17,7 @@ type Commit struct {
 }
 
 func createCommit() (Commit, error) {
+	selfRepo := SelfRepo()
 	commit, err := createCommitStructure()
 	if err != nil {
 		return Commit{}, err
@@ -69,14 +70,15 @@ func createCommitStructure() (Commit, error) {
 }
 
 func takePhotosSelfRepo() ([]Photo, error) {
-	paths, err := findPaths(rootDir, []string{".arciv"}, false)
+	root := rootDir()
+	paths, err := findPaths(root, []string{".arciv"}, false)
 	if err != nil {
 		return []Photo{}, err
 	}
 
 	var photos []Photo
 	for _, path := range paths {
-		photo, err := takePhoto(rootDir, path)
+		photo, err := takePhoto(root, path)
 		if err != nil {
 			return []Photo{}, err
 		}

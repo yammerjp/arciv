@@ -93,11 +93,11 @@ func repositoriesActionRemove(name string) error {
 }
 
 func loadRepos() ([]Repository, error) {
-	lines, err := loadLines(rootDir + "/.arciv/repositories")
+	lines, err := loadLines(rootDir() + "/.arciv/repositories")
 	if err != nil {
 		return []Repository{}, err
 	}
-	repos := []Repository{selfRepo}
+	repos := []Repository{SelfRepo()}
 	for _, line := range lines {
 		idx := strings.Index(line, " ")
 		if idx == -1 {
@@ -146,11 +146,12 @@ func findRepo(name string) (Repository, error) {
 }
 
 func reposWrite(repos []Repository) error {
-	err := os.Rename(rootDir+"/.arciv/repositories", rootDir+"/.arciv/repositories.org")
+	root := rootDir()
+	err := os.Rename(root+"/.arciv/repositories", root+"/.arciv/repositories.org")
 	if err != nil {
 		return err
 	}
-	file, err := os.OpenFile(rootDir+"/.arciv/repositories", os.O_WRONLY|os.O_CREATE, 0666)
+	file, err := os.OpenFile(root+"/.arciv/repositories", os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err
 	}
@@ -164,7 +165,7 @@ func reposWrite(repos []Repository) error {
 		fmt.Fprintln(file, repo.String())
 	}
 
-	err = os.Remove(rootDir + "/.arciv/repositories.org")
+	err = os.Remove(root + "/.arciv/repositories.org")
 	if err != nil {
 		return err
 	}

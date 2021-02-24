@@ -22,14 +22,14 @@ func logCommand(cmd *cobra.Command, args []string) {
 func logAction(args []string) (err error) {
 	switch len(args) {
 	case 0:
-		return printTimeline(selfRepo)
+		return printTimeline(SelfRepo())
 	case 1:
 		repo, err := findRepo(args[0])
 		if err == nil {
 			return printTimeline(repo)
 		}
 		// FIXME: check error type
-		commit, err := selfRepo.LoadCommitFromAlias(args[0])
+		commit, err := SelfRepo().LoadCommitFromAlias(args[0])
 		if err != nil {
 			return err
 		}

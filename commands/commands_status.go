@@ -22,6 +22,7 @@ func init() {
 }
 
 func statusAction() (err error) {
+	selfRepo := SelfRepo()
 	nowPhotos, err := takePhotosSelfRepo()
 	if err != nil {
 		return err

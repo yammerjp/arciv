@@ -147,7 +147,7 @@ func (repository Repository) sendLocalBlobs(photos []Photo) error {
 	}
 
 	for _, photo := range photos {
-		from := rootDir + "/" + photo.Path
+		from := rootDir() + "/" + photo.Path
 		to := repository.Path + "/.arciv/blob/" + photo.Hash.String()
 		err := copyFile(from, to)
 		if err != nil {
@@ -165,7 +165,7 @@ func (repository Repository) ReceiveRemoteBlobs(photos []Photo) error {
 
 	for _, photo := range photos {
 		from := repository.Path + "/.arciv/blob/" + photo.Hash.String()
-		to := rootDir + "/.arciv/blob/" + photo.Hash.String()
+		to := rootDir() + "/.arciv/blob/" + photo.Hash.String()
 		err := copyFile(from, to)
 		if err != nil {
 			return err
@@ -198,8 +198,6 @@ func findCommitId(alias string, commitIds []string) (foundCId string, err error)
 	return foundCId, nil
 }
 
-var selfRepo Repository
-
-func init() {
-	selfRepo = Repository{Name: "self", Path: rootDir, PathType: PATH_FILE}
+func SelfRepo() Repository {
+	return Repository{Name: "self", Path: rootDir(), PathType: PATH_FILE}
 }

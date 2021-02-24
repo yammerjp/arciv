@@ -24,6 +24,7 @@ func init() {
 }
 
 func diffAction(args []string) (err error) {
+	selfRepo := SelfRepo()
 	if len(args) != 2 {
 		return errors.New("Usage: arciv diff [commit-id] [commit-id]")
 	}

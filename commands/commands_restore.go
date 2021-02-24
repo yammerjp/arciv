@@ -22,6 +22,7 @@ func restoreCommand(cmd *cobra.Command, args []string) {
 }
 
 func restoreAction(args []string) (err error) {
+	selfRepo := SelfRepo()
 	var repoName, commitAlias string
 	dryRun := false
 	switch len(args) {
@@ -97,10 +98,10 @@ func restoreAction(args []string) (err error) {
 	}
 
 	// mv all local files to .arciv/blob
-	os.MkdirAll(rootDir+"/.arciv/blob", 0777)
+	os.MkdirAll(selfRepo.Path+"/.arciv/blob", 0777)
 	for _, lPhoto := range localCommit.Photos {
-		from := rootDir + "/" + lPhoto.Path
-		to := rootDir + "/.arciv/blob/" + lPhoto.Hash.String()
+		from := selfRepo.Path + "/" + lPhoto.Path
+		to := selfRepo.Path + "/.arciv/blob/" + lPhoto.Hash.String()
 		if dryRun {
 			fmt.Fprintf(os.Stderr, "move %s -> %s\n", from, to)
 			continue
@@ -114,7 +115,7 @@ func restoreAction(args []string) (err error) {
 
 	// remove garbages
 	if !dryRun {
-		paths, err := findPaths(rootDir, []string{".arciv"}, true)
+		paths, err := findPaths(selfRepo.Path, []string{".arciv"}, true)
 		if err != nil {
 			return err
 		}
@@ -128,8 +129,8 @@ func restoreAction(args []string) (err error) {
 
 	// rename
 	for _, rPhoto := range remoteCommit.Photos {
-		from := rootDir + "/.arciv/blob/" + rPhoto.Hash.String()
-		to := rootDir + "/" + rPhoto.Path
+		from := selfRepo.Path + "/.arciv/blob/" + rPhoto.Hash.String()
+		to := selfRepo.Path + "/" + rPhoto.Path
 		if dryRun {
 			fmt.Fprintf(os.Stderr, "move %s -> %s\n", from, to)
 			continue
@@ -159,11 +160,11 @@ func restoreAction(args []string) (err error) {
 		return err
 	}
 	for _, blob := range localHashStrings {
-		err = os.Remove(rootDir + "/.arciv/blob/" + blob)
+		err = os.Remove(selfRepo.Path + "/.arciv/blob/" + blob)
 		if err != nil {
 			return err
 		}
-		fmt.Fprintln(os.Stderr, "removed %s", rootDir+"/.arciv/blob/"+blob)
+		fmt.Fprintln(os.Stderr, "removed %s", selfRepo.Path+"/.arciv/blob/"+blob)
 	}
 	return nil
 	//   - restoreするcommitに必要なhashリストを確認
