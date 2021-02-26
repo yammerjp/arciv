@@ -72,6 +72,14 @@ func (repository Repository) LoadLatestCommitId() (string, error) {
 	return timeline[len(timeline)-1], nil
 }
 
+func (repository Repository) LoadLatestCommit() (Commit, error) {
+	id, err := repository.LoadLatestCommitId()
+	if err != nil {
+		return Commit{}, err
+	}
+	return repository.LoadCommit(id)
+}
+
 func (repository Repository) LoadCommitFromAlias(alias string) (Commit, error) {
 	timeline, err := repository.LoadTimeline()
 	if err != nil {

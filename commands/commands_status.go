@@ -22,23 +22,17 @@ func init() {
 }
 
 func statusAction() (err error) {
-	selfRepo := SelfRepo()
 	nowPhotos, err := takePhotosSelfRepo()
 	if err != nil {
 		return err
 	}
 
-	latestCommitId, err := selfRepo.LoadLatestCommitId()
+	latestCommit, err := SelfRepo().LoadLatestCommit()
 	if err != nil {
 		return err
 	}
 
-	latestCommitPhotos, err := selfRepo.LoadPhotos(latestCommitId)
-	if err != nil {
-		return err
-	}
-
-	deleted, added := diffPhotos(latestCommitPhotos, nowPhotos)
+	deleted, added := diffPhotos(latestCommit.Photos, nowPhotos)
 	printDiffs(deleted, added)
 	return nil
 }

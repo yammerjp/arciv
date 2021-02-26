@@ -21,11 +21,11 @@ func unstashCommand(cmd *cobra.Command, args []string) {
 }
 
 func unstashAction() (err error) {
-	photos, err := takePhotosSelfRepo()
+	latestCommit, err := SelfRepo().LoadLatestCommit()
 	if err != nil {
 		return err
 	}
-	err = unstashPhotos(photos)
+	err = unstashPhotos(latestCommit.Photos)
 	if err != nil {
 		return err
 	}
