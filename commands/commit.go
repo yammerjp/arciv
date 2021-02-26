@@ -71,7 +71,7 @@ func createCommitStructure() (Commit, error) {
 
 func takePhotosSelfRepo() ([]Photo, error) {
 	selfRepo := SelfRepo()
-	paths, err := findPathsOfSelfRepo(false)
+	paths, err := findPathsOfSelfRepo(true, false)
 	if err != nil {
 		return []Photo{}, err
 	}

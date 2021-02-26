@@ -25,13 +25,14 @@ func rootDir() string {
 	return ""
 }
 
-func findPathsOfSelfRepo(includesDir bool) (relativePaths []string, err error) {
+func findPathsOfSelfRepo(includeFile, includeDir bool) (relativePaths []string, err error) {
 	root := SelfRepo().Path
 	err = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		if !includesDir && info.IsDir() {
+		isDir := info.IsDir()
+		if isDir && !includeDir || !isDir && !includeFile {
 			return nil
 		}
 		if len(root) >= len(path) {
@@ -39,7 +40,7 @@ func findPathsOfSelfRepo(includesDir bool) (relativePaths []string, err error) {
 			return nil
 		}
 		relativePath := path[len(root)+1:]
-		if info.IsDir() && relativePath == ".arciv" {
+		if isDir && relativePath == ".arciv" {
 			return nil
 		}
 		if strings.HasPrefix(relativePath, ".arciv/") {
@@ -135,5 +136,5 @@ func message(str string) {
 	fmt.Fprintln(os.Stderr, str)
 }
 func messageStdin(str string) {
-  fmt.Println(str)
+	fmt.Println(str)
 }

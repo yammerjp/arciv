@@ -114,7 +114,7 @@ func restoreAction(args []string) (err error) {
 
 	// remove garbages
 	if !dryRun {
-		paths, err := findPathsOfSelfRepo(true)
+		paths, err := findPathsOfSelfRepo(true, true)
 		if err != nil {
 			return err
 		}
