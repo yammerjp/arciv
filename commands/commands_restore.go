@@ -102,6 +102,8 @@ func restoreAction(args []string) (err error) {
 
 	// rename and copy
 	err = unstashPhotos(remoteCommit.Photos)
+
+	// FIXME: Add the restored commit to local timeline
 	return nil
 }
 

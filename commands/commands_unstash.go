@@ -51,6 +51,9 @@ func unstashPhotos(photos []Photo) (err error) {
 		from := selfRepo.Path + "/.arciv/blob/" + photo.Hash.String()
 		to := selfRepo.Path + "/" + photo.Path
 
+		// If different files point to a same blob,
+		//  the blob copy on the first (, second, and ...) time,
+		//  and the blob rename on the last time
 		keepInBlobDir := false
 		for j := i + 1; j < len(photos); j++ {
 			if bytes.Compare(photos[j].Hash, photo.Hash) == 0 {
@@ -71,19 +74,6 @@ func unstashPhotos(photos []Photo) (err error) {
 			return err
 		}
 		message(msg + from + " -> " + to)
-	}
-
-	// remove local .arciv/blob/*
-	localHashStrings, err := selfRepo.FetchBlobHashes()
-	if err != nil {
-		return err
-	}
-	for _, blob := range localHashStrings {
-		err = os.Remove(selfRepo.Path + "/.arciv/blob/" + blob)
-		if err != nil {
-			return err
-		}
-		message("removed " + selfRepo.Path + "/.arciv/blob/" + blob)
 	}
 	return nil
 }
