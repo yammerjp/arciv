@@ -32,12 +32,12 @@ func (repository Repository) AddTimeline(commit Commit) error {
 	}
 
 	// TODO: 既に存在していたら追記しない
-  timeline, err := repository.LoadTimeline()
-  if err != nil {
-    return err
-  }
-  timeline = append(timeline, commit.Id)
-  return writeLines(repository.Path+"/.arciv/timeline", timeline)
+	timeline, err := repository.LoadTimeline()
+	if err != nil {
+		return err
+	}
+	timeline = append(timeline, commit.Id)
+	return writeLines(repository.Path+"/.arciv/timeline", timeline)
 }
 
 func (repository Repository) LoadTimeline() ([]string, error) {

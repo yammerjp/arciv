@@ -43,7 +43,7 @@ func genTimestamp(str string) (int64, error) {
 }
 
 func timestamp2string(t int64) string {
-  return fmt.Sprintf("%.8x", t)
+	return fmt.Sprintf("%.8x", t)
 }
 
 func comparePhoto(p0, p1 Photo) int {
