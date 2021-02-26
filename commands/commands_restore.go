@@ -23,11 +23,11 @@ func restoreCommand(cmd *cobra.Command, args []string) {
 func restoreAction(args []string) (err error) {
 	selfRepo := SelfRepo()
 	// dryRun := false
-  if len(args) != 2 {
+	if len(args) != 2 {
 		return errors.New("Usage: arciv restore [repository-name] [alias]")
-  }
-  repoName := args[0]
-  commitAlias := args[1]
+	}
+	repoName := args[0]
+	commitAlias := args[1]
 
 	// fetch remoteCommit
 	remoteRepo, err := findRepo(repoName)
@@ -66,12 +66,13 @@ func restoreAction(args []string) (err error) {
 			blobsToRecieve = append(blobsToRecieve, rPhoto)
 		}
 	}
+	// FIXME: Check remote blobs exists?....
 
 	// download
 	if dryRun {
 		message("Dry run")
 		for _, b := range blobsToRecieve {
-			message("Download: " + b.Hash.String())
+			message("Download: " + b.Hash.String() + ", Will locate to: " + b.Path)
 		}
 		return nil
 	}
@@ -95,5 +96,5 @@ func restoreAction(args []string) (err error) {
 
 func init() {
 	RootCmd.AddCommand(restoreCmd)
-  restoreCmd.PersistentFlags().BoolVarP(&dryRun, "dry-run", "d", false, "Show downloading files if you excute the subcommand 'restore'")
+	restoreCmd.PersistentFlags().BoolVarP(&dryRun, "dry-run", "d", false, "Show downloading files if you excute the subcommand 'restore'")
 }
