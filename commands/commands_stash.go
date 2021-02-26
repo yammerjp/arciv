@@ -19,11 +19,11 @@ func stashCommand(cmd *cobra.Command, args []string) {
 }
 
 func stashAction() (err error) {
-	photos, err := takePhotosSelfRepo()
+	commit, err := createCommit()
 	if err != nil {
 		return err
 	}
-	err = stashPhotos(photos)
+	err = stashPhotos(commit.Photos)
 	if err != nil {
 		return err
 	}
