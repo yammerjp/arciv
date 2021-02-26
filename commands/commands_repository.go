@@ -7,39 +7,39 @@ import (
 )
 
 var (
-	repositoriesCmd = &cobra.Command{
-		Use: "repositories",
-		Run: repositoriesCommand,
+	repositoryCmd = &cobra.Command{
+		Use: "repository",
+		Run: repositoryCommand,
 	}
 )
 
-func repositoriesCommand(cmd *cobra.Command, args []string) {
-	if err := repositoriesAction(args); err != nil {
+func repositoryCommand(cmd *cobra.Command, args []string) {
+	if err := repositoryAction(args); err != nil {
 		Exit(err, 1)
 	}
 }
 
 func init() {
-	RootCmd.AddCommand(repositoriesCmd)
+	RootCmd.AddCommand(repositoryCmd)
 }
 
-func repositoriesAction(args []string) (err error) {
-	if len(args) == 1 && args[0] == "show" {
-		return repositoriesActionShow()
-	}
+func repositoryAction(args []string) (err error) {
+  if len(args) == 0 {
+		return repositoryActionShow()
+  }
 	if len(args) == 3 && args[0] == "add" {
-		return repositoriesActionAdd(args[1], args[2])
+		return repositoryActionAdd(args[1], args[2])
 	}
 	if len(args) == 2 && args[0] == "remove" {
-		return repositoriesActionRemove(args[1])
+		return repositoryActionRemove(args[1])
 	}
-	message("Usage: arciv repositoreis show")
-	message("       arciv repositoreis add [repository name] [repository path]")
-	message("       arciv repositoreis remove [repository name]")
+	message("Usage: arciv repository")
+	message("       arciv repository add [repository name] [repository path]")
+	message("       arciv repository remove [repository name]")
 	return nil
 }
 
-func repositoriesActionShow() error {
+func repositoryActionShow() error {
 	repos, err := loadRepos()
 	if err != nil {
 		return err
@@ -50,7 +50,7 @@ func repositoriesActionShow() error {
 	return nil
 }
 
-func repositoriesActionAdd(name string, url string) error {
+func repositoryActionAdd(name string, url string) error {
 	if strings.Index(name, " ") != -1 {
 		return errors.New("Repository name must not include space")
 	}
@@ -71,7 +71,7 @@ func repositoriesActionAdd(name string, url string) error {
 	return reposWrite(repos)
 }
 
-func repositoriesActionRemove(name string) error {
+func repositoryActionRemove(name string) error {
 	if name == "self" {
 		return errors.New("self must be exist")
 	}
