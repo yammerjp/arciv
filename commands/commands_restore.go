@@ -12,6 +12,8 @@ var (
 	}
 )
 
+var dryRun bool
+
 func restoreCommand(cmd *cobra.Command, args []string) {
 	if err := restoreAction(args); err != nil {
 		Exit(err, 1)
@@ -20,29 +22,13 @@ func restoreCommand(cmd *cobra.Command, args []string) {
 
 func restoreAction(args []string) (err error) {
 	selfRepo := SelfRepo()
-	var repoName, commitAlias string
-	dryRun := false
-	switch len(args) {
-	case 2:
-		repoName = args[0]
-		commitAlias = args[1]
-	case 3:
-		dryRun = true
-		if args[0] == "dry-run" {
-			repoName = args[1]
-			commitAlias = args[2]
-		} else if args[1] == "dry-run" {
-			repoName = args[0]
-			commitAlias = args[2]
-		} else if args[2] == "dry-run" {
-			repoName = args[0]
-			commitAlias = args[1]
-		} else {
-			return errors.New("Usage: arciv restore [repository-name] [alias]")
-		}
-	default:
+	// dryRun := false
+  if len(args) != 2 {
 		return errors.New("Usage: arciv restore [repository-name] [alias]")
-	}
+  }
+  repoName := args[0]
+  commitAlias := args[1]
+
 	// fetch remoteCommit
 	remoteRepo, err := findRepo(repoName)
 	if err != nil {
@@ -109,4 +95,5 @@ func restoreAction(args []string) (err error) {
 
 func init() {
 	RootCmd.AddCommand(restoreCmd)
+  restoreCmd.PersistentFlags().BoolVarP(&dryRun, "dry-run", "d", false, "Show downloading files if you excute the subcommand 'restore'")
 }
