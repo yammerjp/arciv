@@ -55,8 +55,8 @@ func unstashPhotos(photos []Photo) (err error) {
 		to := selfRepo.Path + "/" + photo.Path
 
 		// If different files point to a same blob,
-		//  the blob copy on the first (, second, and ...) time,
-		//  and the blob rename on the last time
+		//  the blob is copied on the first (, second, and ...) time,
+		//  and moved on the last time
 		keepInBlobDir := false
 		for j := i + 1; j < len(photos); j++ {
 			if bytes.Compare(photos[j].Hash, photo.Hash) == 0 {
