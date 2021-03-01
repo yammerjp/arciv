@@ -13,7 +13,7 @@ type Commit struct {
 	Id        string
 	Timestamp int64
 	Hash      Hash
-	Tags    []Tag
+	Tags      []Tag
 }
 
 func createCommit() (Commit, error) {
@@ -65,7 +65,7 @@ func createCommitStructure() (Commit, error) {
 		Id:        timestamp2string(timestamp) + "-" + hash.String(),
 		Timestamp: timestamp,
 		Hash:      hash,
-		Tags:    tags,
+		Tags:      tags,
 	}, nil
 }
 

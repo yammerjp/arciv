@@ -135,6 +135,7 @@ func Exists(filename string) bool {
 func message(str string) {
 	fmt.Fprintln(os.Stderr, str)
 }
+
 func messageStdin(str string) {
 	fmt.Println(str)
 }

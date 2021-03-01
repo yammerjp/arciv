@@ -61,6 +61,25 @@ func (repository Repository) WriteTags(commit Commit) error {
 	return writeLines(repository.Path+"/.arciv/list/"+commit.Id, lines)
 }
 
+func (repository Repository) LoadTags(commitId string) (tags []Tag, err error) {
+	if repository.PathType != PATH_FILE {
+		return []Tag{}, errors.New("Repository's PathType must be PATH_FILE")
+	}
+
+	lines, err := loadLines(repository.Path + "/.arciv/list/" + commitId)
+	if err != nil {
+		return []Tag{}, err
+	}
+	for _, line := range lines {
+		tag, err := str2Tag(line)
+		if err != nil {
+			return []Tag{}, err
+		}
+		tags = append(tags, tag)
+	}
+	return tags, nil
+}
+
 func (repository Repository) LoadLatestCommitId() (string, error) {
 	timeline, err := repository.LoadTimeline()
 	if err != nil {
@@ -109,25 +128,6 @@ func (repository Repository) LoadCommit(commitId string) (Commit, error) {
 		return Commit{}, err
 	}
 	return Commit{Id: commitId, Timestamp: timestamp, Hash: hash, Tags: tags}, nil
-}
-
-func (repository Repository) LoadTags(commitId string) (tags []Tag, err error) {
-	if repository.PathType != PATH_FILE {
-		return []Tag{}, errors.New("Repository's PathType must be PATH_FILE")
-	}
-
-	lines, err := loadLines(repository.Path + "/.arciv/list/" + commitId)
-	if err != nil {
-		return []Tag{}, err
-	}
-	for _, line := range lines {
-		tag, err := str2Tag(line)
-		if err != nil {
-			return []Tag{}, err
-		}
-		tags = append(tags, tag)
-	}
-	return tags, nil
 }
 
 func (repository Repository) FetchBlobHashes() ([]string, error) {
