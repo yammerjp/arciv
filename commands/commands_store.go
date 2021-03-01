@@ -45,13 +45,13 @@ func storeAction(repoName string) (err error) {
 	}
 
 	// - storeされていないファイルを送信する
-	var photosToSend []Photo
-	for _, photo := range commit.Photos {
-		if !isIncluded(remoteHashStrings, photo.Hash.String()) {
-			photosToSend = append(photosToSend, photo)
+	var tagsToSend []Tag
+	for _, tag := range commit.Tags {
+		if !isIncluded(remoteHashStrings, tag.Hash.String()) {
+			tagsToSend = append(tagsToSend, tag)
 		}
 	}
-	err = remoteRepo.sendLocalBlobs(photosToSend)
+	err = remoteRepo.sendLocalBlobs(tagsToSend)
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func storeAction(repoName string) (err error) {
 		message("The commit " + commit.Id + " already exists in the timeline of the repository " + remoteRepo.Name)
 		return nil
 	}
-	err = remoteRepo.WritePhotos(commit)
+	err = remoteRepo.WriteTags(commit)
 	if err != nil {
 		return err
 	}

@@ -8,37 +8,37 @@ import (
 	"strings"
 )
 
-type Photo struct {
+type Tag struct {
 	Path      string
 	Hash      Hash
 	Timestamp int64
 }
 
-func (photo Photo) String() string {
-	return photo.Hash.String() + " " + timestamp2string(photo.Timestamp) + " " + photo.Path
+func (tag Tag) String() string {
+	return tag.Hash.String() + " " + timestamp2string(tag.Timestamp) + " " + tag.Path
 }
 
-func genPhoto(line string) (Photo, error) {
+func str2Tag(line string) (Tag, error) {
 	// 64...Hash, 1...space, 8...timestamp, 1...space
 	if len(line) <= 64+1+8+1 {
-		return Photo{}, errors.New("The length of Photo's line must be more than 74")
+		return Tag{}, errors.New("The length of Tag's line must be more than 74")
 	}
 	hash, err := hex2hash(line[:64])
 	if err != nil {
-		return Photo{}, err
+		return Tag{}, err
 	}
-	timestamp, err := genTimestamp(line[65:73])
+	timestamp, err := str2timestamp(line[65:73])
 	if err != nil {
-		return Photo{}, err
+		return Tag{}, err
 	}
-	return Photo{
+	return Tag{
 		Path:      line[74:],
 		Hash:      hash,
 		Timestamp: timestamp,
 	}, nil
 }
 
-func genTimestamp(str string) (int64, error) {
+func str2timestamp(str string) (int64, error) {
 	return strconv.ParseInt(str, 16, 64)
 }
 
@@ -46,7 +46,7 @@ func timestamp2string(t int64) string {
 	return fmt.Sprintf("%.8x", t)
 }
 
-func comparePhoto(p0, p1 Photo) int {
+func compareTag(p0, p1 Tag) int {
 	compared := bytes.Compare(p0.Hash, p1.Hash)
 	if compared != 0 {
 		return compared
@@ -70,15 +70,15 @@ const (
 	FIND_TIMESTAMP FindField = 0x0100
 )
 
-func findPhotoIndex(photos []Photo, comparingPhoto Photo, flag FindField) int {
-	for i, p := range photos {
-		if (flag&FIND_HASH) != 0000 && bytes.Compare(p.Hash, comparingPhoto.Hash) != 0 {
+func findTagIndex(tags []Tag, comparingTag Tag, flag FindField) int {
+	for i, p := range tags {
+		if (flag&FIND_HASH) != 0000 && bytes.Compare(p.Hash, comparingTag.Hash) != 0 {
 			continue
 		}
-		if (flag&FIND_TIMESTAMP) != 0000 && p.Timestamp != comparingPhoto.Timestamp {
+		if (flag&FIND_TIMESTAMP) != 0000 && p.Timestamp != comparingTag.Timestamp {
 			continue
 		}
-		if (flag&FIND_PATH) != 0x0000 && p.Path != comparingPhoto.Path {
+		if (flag&FIND_PATH) != 0x0000 && p.Path != comparingTag.Path {
 			continue
 		}
 		return i

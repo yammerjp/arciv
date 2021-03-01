@@ -27,7 +27,7 @@ func stashAction() (err error) {
 	if err != nil {
 		return err
 	}
-	err = stashPhotos(commit.Photos)
+	err = stashTags(commit.Tags)
 	if err != nil {
 		return err
 	}
@@ -36,12 +36,12 @@ func stashAction() (err error) {
 	return nil
 }
 
-func stashPhotos(photos []Photo) (err error) {
+func stashTags(tags []Tag) (err error) {
 	selfRepo := SelfRepo()
 	os.MkdirAll(selfRepo.Path+"/.arciv/blob", 0777)
 
 	// move all files to .arciv/blob
-	for _, p := range photos {
+	for _, p := range tags {
 		from := selfRepo.Path + "/" + p.Path
 		to := selfRepo.Path + "/.arciv/blob/" + p.Hash.String()
 		err = os.Rename(from, to)

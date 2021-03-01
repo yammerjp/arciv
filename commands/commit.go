@@ -13,7 +13,7 @@ type Commit struct {
 	Id        string
 	Timestamp int64
 	Hash      Hash
-	Photos    []Photo
+	Tags    []Tag
 }
 
 func createCommit() (Commit, error) {
@@ -34,7 +34,7 @@ func createCommit() (Commit, error) {
 		}
 	}
 
-	err = selfRepo.WritePhotos(commit)
+	err = selfRepo.WriteTags(commit)
 	if err != nil {
 		return Commit{}, err
 	}
@@ -47,15 +47,15 @@ func createCommit() (Commit, error) {
 }
 
 func createCommitStructure() (Commit, error) {
-	// Photos
-	photos, err := takePhotosSelfRepo()
+	// Tags
+	tags, err := taggingsSelfRepo()
 	if err != nil {
 		return Commit{}, err
 	}
 	// Hash
 	hasher := sha256.New()
-	for _, photo := range photos {
-		fmt.Fprintln(hasher, photo.String())
+	for _, tag := range tags {
+		fmt.Fprintln(hasher, tag.String())
 	}
 	hash := Hash(hasher.Sum(nil))
 	// Timestamp
@@ -65,41 +65,41 @@ func createCommitStructure() (Commit, error) {
 		Id:        timestamp2string(timestamp) + "-" + hash.String(),
 		Timestamp: timestamp,
 		Hash:      hash,
-		Photos:    photos,
+		Tags:    tags,
 	}, nil
 }
 
-func takePhotosSelfRepo() ([]Photo, error) {
+func taggingsSelfRepo() ([]Tag, error) {
 	selfRepo := SelfRepo()
 	paths, err := findPathsOfSelfRepo(true, false)
 	if err != nil {
-		return []Photo{}, err
+		return []Tag{}, err
 	}
 
-	var photos []Photo
+	var tags []Tag
 	for _, path := range paths {
-		photo, err := takePhoto(selfRepo.Path, path)
+		tag, err := tagging(selfRepo.Path, path)
 		if err != nil {
-			return []Photo{}, err
+			return []Tag{}, err
 		}
-		photos = append(photos, photo)
+		tags = append(tags, tag)
 	}
-	sort.Slice(photos, func(i, j int) bool {
-		return comparePhoto(photos[i], photos[j]) < 0
+	sort.Slice(tags, func(i, j int) bool {
+		return compareTag(tags[i], tags[j]) < 0
 	})
-	return photos, nil
+	return tags, nil
 }
 
-func takePhoto(root, path string) (Photo, error) {
+func tagging(root, path string) (Tag, error) {
 	// hash
 	hasher := sha256.New()
 	f, err := os.Open(root + "/" + path)
 	if err != nil {
-		return Photo{}, err
+		return Tag{}, err
 	}
 	_, err = io.Copy(hasher, f)
 	if err != nil {
-		return Photo{}, err
+		return Tag{}, err
 	}
 	hash := hasher.Sum(nil)
 	f.Close()
@@ -107,11 +107,11 @@ func takePhoto(root, path string) (Photo, error) {
 	//timestamp
 	fileInfo, err := os.Stat(root + "/" + path)
 	if err != nil {
-		return Photo{}, err
+		return Tag{}, err
 	}
 	timestamp := fileInfo.ModTime().Unix()
 
-	return Photo{
+	return Tag{
 		Path:      path,
 		Hash:      hash,
 		Timestamp: timestamp,

@@ -48,15 +48,15 @@ func (repository Repository) LoadTimeline() ([]string, error) {
 	return loadLines(repository.Path + "/.arciv/timeline")
 }
 
-func (repository Repository) WritePhotos(commit Commit) error {
+func (repository Repository) WriteTags(commit Commit) error {
 	if repository.PathType != PATH_FILE {
 		return errors.New("Repository's PathType must be PATH_FILE")
 	}
 
 	// TODO:既に同名のファイルが存在したら書き込む必要はない
 	var lines []string
-	for _, photo := range commit.Photos {
-		lines = append(lines, photo.String())
+	for _, tag := range commit.Tags {
+		lines = append(lines, tag.String())
 	}
 	return writeLines(repository.Path+"/.arciv/list/"+commit.Id, lines)
 }
@@ -96,11 +96,11 @@ func (repository Repository) LoadCommit(commitId string) (Commit, error) {
 	if len(commitId) != 73 {
 		return Commit{}, errors.New("Length of a commit id must be 73.")
 	}
-	photos, err := repository.LoadPhotos(commitId)
+	tags, err := repository.LoadTags(commitId)
 	if err != nil {
 		return Commit{}, err
 	}
-	timestamp, err := genTimestamp(commitId[:8])
+	timestamp, err := str2timestamp(commitId[:8])
 	if err != nil {
 		return Commit{}, err
 	}
@@ -108,26 +108,26 @@ func (repository Repository) LoadCommit(commitId string) (Commit, error) {
 	if err != nil {
 		return Commit{}, err
 	}
-	return Commit{Id: commitId, Timestamp: timestamp, Hash: hash, Photos: photos}, nil
+	return Commit{Id: commitId, Timestamp: timestamp, Hash: hash, Tags: tags}, nil
 }
 
-func (repository Repository) LoadPhotos(commitId string) (photos []Photo, err error) {
+func (repository Repository) LoadTags(commitId string) (tags []Tag, err error) {
 	if repository.PathType != PATH_FILE {
-		return []Photo{}, errors.New("Repository's PathType must be PATH_FILE")
+		return []Tag{}, errors.New("Repository's PathType must be PATH_FILE")
 	}
 
 	lines, err := loadLines(repository.Path + "/.arciv/list/" + commitId)
 	if err != nil {
-		return []Photo{}, err
+		return []Tag{}, err
 	}
 	for _, line := range lines {
-		photo, err := genPhoto(line)
+		tag, err := str2Tag(line)
 		if err != nil {
-			return []Photo{}, err
+			return []Tag{}, err
 		}
-		photos = append(photos, photo)
+		tags = append(tags, tag)
 	}
-	return photos, nil
+	return tags, nil
 }
 
 func (repository Repository) FetchBlobHashes() ([]string, error) {
@@ -140,14 +140,14 @@ func (repository Repository) FetchBlobHashes() ([]string, error) {
 	return lsWithoutDir(repository.Path + "/.arciv/blob")
 }
 
-func (repository Repository) sendLocalBlobs(photos []Photo) error {
+func (repository Repository) sendLocalBlobs(tags []Tag) error {
 	if repository.PathType != PATH_FILE {
 		return errors.New("Repository's PathType must be PATH_FILE")
 	}
 
-	for _, photo := range photos {
-		from := rootDir() + "/" + photo.Path
-		to := repository.Path + "/.arciv/blob/" + photo.Hash.String()
+	for _, tag := range tags {
+		from := rootDir() + "/" + tag.Path
+		to := repository.Path + "/.arciv/blob/" + tag.Hash.String()
 		err := copyFile(from, to)
 		if err != nil {
 			return err
@@ -157,14 +157,14 @@ func (repository Repository) sendLocalBlobs(photos []Photo) error {
 	return nil
 }
 
-func (repository Repository) ReceiveRemoteBlobs(photos []Photo) error {
+func (repository Repository) ReceiveRemoteBlobs(tags []Tag) error {
 	if repository.PathType != PATH_FILE {
 		return errors.New("Repository's PathType must be PATH_FILE")
 	}
 
-	for _, photo := range photos {
-		from := repository.Path + "/.arciv/blob/" + photo.Hash.String()
-		to := rootDir() + "/.arciv/blob/" + photo.Hash.String()
+	for _, tag := range tags {
+		from := repository.Path + "/.arciv/blob/" + tag.Hash.String()
+		to := rootDir() + "/.arciv/blob/" + tag.Hash.String()
 		err := copyFile(from, to)
 		if err != nil {
 			return err

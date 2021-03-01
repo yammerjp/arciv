@@ -58,13 +58,13 @@ func restoreAction(repoName, commitAlias string) (err error) {
 	if err != nil {
 		return err
 	}
-	for _, lPhoto := range localCommit.Photos {
-		localHashStrings = append(localHashStrings, lPhoto.Hash.String())
+	for _, lTag := range localCommit.Tags {
+		localHashStrings = append(localHashStrings, lTag.Hash.String())
 	}
-	var blobsToRecieve []Photo
-	for _, rPhoto := range remoteCommit.Photos {
-		if !isIncluded(localHashStrings, rPhoto.Hash.String()) {
-			blobsToRecieve = append(blobsToRecieve, rPhoto)
+	var blobsToRecieve []Tag
+	for _, rTag := range remoteCommit.Tags {
+		if !isIncluded(localHashStrings, rTag.Hash.String()) {
+			blobsToRecieve = append(blobsToRecieve, rTag)
 		}
 	}
 	// FIXME: Check remote blobs exists?....
@@ -83,13 +83,13 @@ func restoreAction(repoName, commitAlias string) (err error) {
 	}
 
 	// mv all local files to .arciv/blob
-	err = stashPhotos(localCommit.Photos)
+	err = stashTags(localCommit.Tags)
 	if err != nil {
 		return err
 	}
 
 	// rename and copy
-	err = unstashPhotos(remoteCommit.Photos)
+	err = unstashTags(remoteCommit.Tags)
 
 	// FIXME: Add the restored commit to local timeline
 	return nil

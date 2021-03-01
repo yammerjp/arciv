@@ -25,7 +25,7 @@ func init() {
 }
 
 func statusAction() (err error) {
-	nowPhotos, err := takePhotosSelfRepo()
+	nowTags, err := taggingsSelfRepo()
 	if err != nil {
 		return err
 	}
@@ -35,7 +35,7 @@ func statusAction() (err error) {
 		return err
 	}
 
-	deleted, added := diffPhotos(latestCommit.Photos, nowPhotos)
+	deleted, added := diffTags(latestCommit.Tags, nowTags)
 	printDiffs(deleted, added)
 	return nil
 }

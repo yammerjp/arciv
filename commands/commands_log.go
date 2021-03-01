@@ -62,7 +62,7 @@ func printTimeline(repo Repository) error {
 }
 
 func printCommit(c Commit) error {
-	for _, p := range c.Photos {
+	for _, p := range c.Tags {
 		messageStdin(p.String())
 	}
 	return nil

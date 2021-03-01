@@ -28,19 +28,19 @@ func unstashAction() (err error) {
 	if err != nil {
 		return err
 	}
-	err = unstashPhotos(latestCommit.Photos)
+	err = unstashTags(latestCommit.Tags)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func unstashPhotos(photos []Photo) (err error) {
+func unstashTags(tags []Tag) (err error) {
 	selfRepo := SelfRepo()
 	// mkdir
 	dirSet := make(map[string]struct{})
-	for _, photo := range photos {
-		dirSet[filepath.Dir(photo.Path)] = struct{}{}
+	for _, tag := range tags {
+		dirSet[filepath.Dir(tag.Path)] = struct{}{}
 	}
 	for dir, _ := range dirSet {
 		err = os.MkdirAll(dir, 0777)
@@ -50,16 +50,16 @@ func unstashPhotos(photos []Photo) (err error) {
 	}
 
 	// copy or move
-	for i, photo := range photos {
-		from := selfRepo.Path + "/.arciv/blob/" + photo.Hash.String()
-		to := selfRepo.Path + "/" + photo.Path
+	for i, tag := range tags {
+		from := selfRepo.Path + "/.arciv/blob/" + tag.Hash.String()
+		to := selfRepo.Path + "/" + tag.Path
 
 		// If different files point to a same blob,
 		//  the blob is copied on the first (, second, and ...) time,
 		//  and moved on the last time
 		keepInBlobDir := false
-		for j := i + 1; j < len(photos); j++ {
-			if bytes.Compare(photos[j].Hash, photo.Hash) == 0 {
+		for j := i + 1; j < len(tags); j++ {
+			if bytes.Compare(tags[j].Hash, tag.Hash) == 0 {
 				keepInBlobDir = true
 			}
 		}
