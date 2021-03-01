@@ -48,17 +48,30 @@ func (repository Repository) LoadTimeline() ([]string, error) {
 	return loadLines(repository.Path + "/.arciv/timeline")
 }
 
-func (repository Repository) WriteTags(commit Commit) error {
+func (repository Repository) WriteTags(commit Commit, base *Commit) error {
+	var lines []string
+	if base == nil {
+		lines = []string{"#arciv-commit-atom"}
+		for _, tag := range commit.Tags {
+			lines = append(lines, tag.String())
+		}
+	} else {
+		lines = []string{"#arciv-commit-extension from:" + base.Id}
+		deleted, added := diffTags(base.Tags, commit.Tags)
+		for _, c := range deleted {
+			lines = append(lines, "- "+c.String())
+		}
+		for _, c := range added {
+			lines = append(lines, "+ "+c.String())
+		}
+	}
+
 	if repository.PathType != PATH_FILE {
 		return errors.New("Repository's PathType must be PATH_FILE")
 	}
-
-	// TODO:既に同名のファイルが存在したら書き込む必要はない
-	// add header
-	lines := []string{"#arciv-commit-atom"}
-	// add body
-	for _, tag := range commit.Tags {
-		lines = append(lines, tag.String())
+	// don't write if file already exists
+	if Exists(repository.Path + "/.arciv/list/" + commit.Id) {
+		return nil
 	}
 	return writeLines(repository.Path+"/.arciv/list/"+commit.Id, lines)
 }
@@ -73,22 +86,54 @@ func (repository Repository) LoadTags(commitId string) ([]Tag, error) {
 		return []Tag{}, err
 	}
 
-	if strings.HasPrefix(lines[0], "#arciv-commit-atom") {
-		return repository.LoadTagsFromAtom(lines[1:])
+	if strings.HasPrefix(lines[0], "#arciv-commit-extension from:") {
+		if len(lines[0]) < 29+73 {
+			return []Tag{}, errors.New("Length of the line '#arciv-commit-extension from:...' must be 102 or more")
+		}
+		return repository.LoadTagsFromExtension(lines[0][len("#arciv-commit-extension from:"):], lines[1:])
 	}
-	if strings.HasPrefix(lines[0], "#") {
+	if !strings.HasPrefix(lines[0], "#arciv-commit-atom") && strings.HasPrefix(lines[0], "#") {
 		return []Tag{}, errors.New("Unknow file type of a arciv tag list file")
 	}
-	return repository.LoadTagsFromAtom(lines[1:])
-}
 
-func (repository Repository) LoadTagsFromAtom(body []string) (tags []Tag, err error) {
-	for _, line := range body {
+	var tags []Tag
+	for _, line := range lines[1:] {
 		tag, err := str2Tag(line)
 		if err != nil {
 			return []Tag{}, err
 		}
 		tags = append(tags, tag)
+	}
+	return tags, nil
+}
+
+func (repository Repository) LoadTagsFromExtension(baseCommitId string, body []string) ([]Tag, error) {
+	tags, err := repository.LoadTags(baseCommitId)
+	if err != nil {
+		return []Tag{}, err
+	}
+	for _, line := range body {
+		if len(line) < 75 || string(line[1]) != " " {
+			return []Tag{}, errors.New("Length of lines of a commit of extension tag list must be 75 or more")
+		}
+
+		tag, err := str2Tag(line[2:])
+		if err != nil {
+			return []Tag{}, err
+		}
+
+		switch string(line[0]) {
+		case "-":
+			idx := findTagIndex(tags, tag, FIND_HASH|FIND_PATH)
+			if idx == -1 {
+				return []Tag{}, errors.New("A tag specified by extension tag list is not found")
+			}
+			tags = append(tags[:idx], tags[idx+1:]...)
+		case "+":
+			tags = append(tags, tag)
+		default:
+			return []Tag{}, errors.New("Lines of a commit of extension tag list must be started with '+' or '-'")
+		}
 	}
 	return tags, nil
 }

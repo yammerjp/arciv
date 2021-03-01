@@ -33,8 +33,16 @@ func createCommit() (Commit, error) {
 			return selfRepo.LoadCommit(cId)
 		}
 	}
+	var baseCommit *Commit
+	if len(commitIds) > 0 {
+		c, err := selfRepo.LoadCommit(commitIds[len(commitIds)-1])
+		if err != nil {
+			return Commit{}, err
+		}
+		baseCommit = &c
+	}
 
-	err = selfRepo.WriteTags(commit)
+	err = selfRepo.WriteTags(commit, baseCommit)
 	if err != nil {
 		return Commit{}, err
 	}

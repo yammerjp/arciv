@@ -68,7 +68,18 @@ func storeAction(repoName string) (err error) {
 		message("The commit " + commit.Id + " already exists in the timeline of the repository " + remoteRepo.Name)
 		return nil
 	}
-	err = remoteRepo.WriteTags(commit)
+
+	var baseCommit *Commit
+	commitIds := remoteTimeline
+	if len(commitIds) > 0 {
+		c, err := remoteRepo.LoadCommit(commitIds[len(commitIds)-1])
+		if err != nil {
+			return err
+		}
+		baseCommit = &c
+	}
+
+	err = remoteRepo.WriteTags(commit, baseCommit)
 	if err != nil {
 		return err
 	}
