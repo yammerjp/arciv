@@ -54,14 +54,16 @@ func (repository Repository) WriteTags(commit Commit) error {
 	}
 
 	// TODO:既に同名のファイルが存在したら書き込む必要はない
-	var lines []string
+	// add header
+	lines := []string{"#arciv-commit-atom"}
+	// add body
 	for _, tag := range commit.Tags {
 		lines = append(lines, tag.String())
 	}
 	return writeLines(repository.Path+"/.arciv/list/"+commit.Id, lines)
 }
 
-func (repository Repository) LoadTags(commitId string) (tags []Tag, err error) {
+func (repository Repository) LoadTags(commitId string) ([]Tag, error) {
 	if repository.PathType != PATH_FILE {
 		return []Tag{}, errors.New("Repository's PathType must be PATH_FILE")
 	}
@@ -70,7 +72,18 @@ func (repository Repository) LoadTags(commitId string) (tags []Tag, err error) {
 	if err != nil {
 		return []Tag{}, err
 	}
-	for _, line := range lines {
+
+	if strings.HasPrefix(lines[0], "#arciv-commit-atom") {
+		return repository.LoadTagsFromAtom(lines[1:])
+	}
+	if strings.HasPrefix(lines[0], "#") {
+		return []Tag{}, errors.New("Unknow file type of a arciv tag list file")
+	}
+	return repository.LoadTagsFromAtom(lines[1:])
+}
+
+func (repository Repository) LoadTagsFromAtom(body []string) (tags []Tag, err error) {
+	for _, line := range body {
 		tag, err := str2Tag(line)
 		if err != nil {
 			return []Tag{}, err
