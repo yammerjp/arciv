@@ -15,7 +15,8 @@ var (
 	}
 )
 
-var dryRun bool
+var dryRunning bool
+var forceExcution bool
 
 func restoreCommand(cmd *cobra.Command, args []string) {
 	if err := restoreAction(args[0], args[1]); err != nil {
@@ -41,12 +42,15 @@ func restoreAction(repoName, commitAlias string) (err error) {
 	if err != nil {
 		return err
 	}
-	localLatestCommitId, err := selfRepo.LoadLatestCommitId()
-	if err != nil {
-		return err
-	}
-	if localCommit.Id[9:] != localLatestCommitId[9:] {
-		return errors.New("Directory structure is not saved with latest commit")
+
+	if !forceExcution {
+		localLatestCommitId, err := selfRepo.LoadLatestCommitId()
+		if err != nil {
+			return err
+		}
+		if localCommit.Id[9:] != localLatestCommitId[9:] {
+			return errors.New("Directory structure is not saved with latest commit")
+		}
 	}
 
 	// filter blob hashes to recieve
@@ -66,8 +70,8 @@ func restoreAction(repoName, commitAlias string) (err error) {
 	// FIXME: Check remote blobs exists?....
 
 	// download
-	if dryRun {
-		message("Dry run")
+	if dryRunning {
+		message("Show downloading files if you excute 'restore'.")
 		for _, b := range blobsToRecieve {
 			message("Download: " + b.Hash.String() + ", Will locate to: " + b.Path)
 		}
@@ -93,5 +97,6 @@ func restoreAction(repoName, commitAlias string) (err error) {
 
 func init() {
 	RootCmd.AddCommand(restoreCmd)
-	restoreCmd.Flags().BoolVarP(&dryRun, "dry-run", "d", false, "Show downloading files if you excute the subcommand 'restore'")
+	restoreCmd.Flags().BoolVarP(&dryRunning, "dry-run", "d", false, "Show downloading files if you excute the subcommand 'restore'")
+	restoreCmd.Flags().BoolVarP(&forceExcution, "force", "f", false, "Restore forcely even if files of the self repository is not commited")
 }
