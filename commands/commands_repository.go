@@ -8,8 +8,21 @@ import (
 
 var (
 	repositoryCmd = &cobra.Command{
-		Use: "repository",
-		Run: repositoryCommand,
+		Use:   "repository ( | add <name> <path> | remove <name>)",
+		Run:   repositoryCommand,
+		Short: "Show, add or remove repositories",
+		Long: `Show, add or remove repositories.
+On excute 'arciv repository', the command shows repositories registerd the current repository.
+On excite 'arciv repository add', the command registers a new repository to the current repository.
+On excute 'arciv repository remove', the command removes a already registerd repository from the current repository.
+
+Example:
+        arciv repository add media-stable file:///media/hdd0/arciv-repo-directory
+          ... register the new repository, 'mesia-stable' and its root directory is /media/hdd0/arciv-repo-directory
+        arciv repository remove media-stable
+          ... remove the repository, 'media-stable'
+`,
+		Args: cobra.RangeArgs(0, 3),
 	}
 )
 
@@ -24,9 +37,9 @@ func init() {
 }
 
 func repositoryAction(args []string) (err error) {
-  if len(args) == 0 {
+	if len(args) == 0 {
 		return repositoryActionShow()
-  }
+	}
 	if len(args) == 3 && args[0] == "add" {
 		return repositoryActionAdd(args[1], args[2])
 	}

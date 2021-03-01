@@ -6,9 +6,11 @@ import (
 
 var (
 	logCmd = &cobra.Command{
-		Use: "log",
-		Run: logCommand,
-    Args: cobra.NoArgs,
+		Use:   "log",
+		Run:   logCommand,
+		Short: "Print a timeline or a commit",
+		Long:  "Print A timeline (of the self repository by default) if --commit option is not set. Print the commit if --commit option is set.",
+		Args:  cobra.NoArgs,
 	}
 )
 
@@ -23,29 +25,29 @@ func logCommand(cmd *cobra.Command, args []string) {
 
 func init() {
 	RootCmd.AddCommand(logCmd)
-  logCmd.Flags().StringVarP(&repoName, "repository", "r", "", "repository name")
-  logCmd.Flags().StringVarP(&commitAlias, "commit", "c", "", "commit id")
+	logCmd.Flags().StringVarP(&repoName, "repository", "r", "", "repository name")
+	logCmd.Flags().StringVarP(&commitAlias, "commit", "c", "", "commit id")
 }
 
 func logAction(args []string) (err error) {
-  var repo Repository
-  if repoName == "" {
-    repo = SelfRepo()
-  } else {
-    repo, err = findRepo(repoName)
-    if err != nil {
-      return err
-    }
-  }
+	var repo Repository
+	if repoName == "" {
+		repo = SelfRepo()
+	} else {
+		repo, err = findRepo(repoName)
+		if err != nil {
+			return err
+		}
+	}
 
-  if commitAlias == "" {
-    return printTimeline(repo)
-  }
-  commit, err := repo.LoadCommitFromAlias(commitAlias)
-  if err != nil {
-    return err
-  }
-  return printCommit(commit)
+	if commitAlias == "" {
+		return printTimeline(repo)
+	}
+	commit, err := repo.LoadCommitFromAlias(commitAlias)
+	if err != nil {
+		return err
+	}
+	return printCommit(commit)
 }
 
 func printTimeline(repo Repository) error {

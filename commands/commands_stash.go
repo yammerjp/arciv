@@ -7,8 +7,12 @@ import (
 
 var (
 	stashCmd = &cobra.Command{
-		Use: "stash",
-		Run: stashCommand,
+		Use:   "stash",
+		Run:   stashCommand,
+		Short: "Stash all files in the self repository to .arciv/blob directory",
+		Long: `Create a commit and move all files in the self repository to .arciv/blob directory.
+You can restore moved files with excuting the subcommand 'unstash', after excuting the subcommand 'stash'`,
+		Args: cobra.NoArgs,
 	}
 )
 

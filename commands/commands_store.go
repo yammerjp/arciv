@@ -6,13 +6,16 @@ import (
 
 var (
 	storeCmd = &cobra.Command{
-		Use: "store",
-		Run: storeCommand,
+		Use:   "store <repository>",
+		Run:   storeCommand,
+		Short: "Store files from the self repository to another repository.",
+		Long:  "Create a commit and send new blobs and timeline to another repository.",
+		Args:  cobra.ExactArgs(1),
 	}
 )
 
 func storeCommand(cmd *cobra.Command, args []string) {
-	if err := storeAction(args); err != nil {
+	if err := storeAction(args[0]); err != nil {
 		Exit(err, 1)
 	}
 }
@@ -21,14 +24,10 @@ func init() {
 	RootCmd.AddCommand(storeCmd)
 }
 
-func storeAction(args []string) (err error) {
+func storeAction(repoName string) (err error) {
 	// - 現在のディレクトリ構成とファイルのリストを記録 (commit)
 	//   - args[0] で指定されたrepository を取得
-	if len(args) != 1 {
-		message("Usage: arciv store [repository-name]")
-		return nil
-	}
-	remoteRepo, err := findRepo(args[0])
+	remoteRepo, err := findRepo(repoName)
 	if err != nil {
 		return err
 	}

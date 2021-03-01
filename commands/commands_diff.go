@@ -7,13 +7,21 @@ import (
 
 var (
 	diffCmd = &cobra.Command{
-		Use: "diff",
-		Run: diffCommand,
+		Use:   "diff <commit> <commit>",
+		Run:   diffCommand,
+		Short: "Print difference of commits",
+		Long: `Compare commits specified by arguments and print difference.
+The command prints changes from the first argument's commit to the second one
+Arguments need commit-id, allow a part of commit-id.
+For example, if commit-id is '6038d4c5-92e040fe51a920f869a929e3a309e072c7bfe115a1c57b0b472e248f3f09570d',
+arguments allow '6038d4', '6038d4c5-92e', '92e', '92e040fe' and so on...
+If a part of commit-id points more than 1 commit, an error occurs. `,
+		Args: cobra.ExactArgs(2),
 	}
 )
 
 func diffCommand(cmd *cobra.Command, args []string) {
-	if err := diffAction(args); err != nil {
+	if err := diffAction(args[0], args[1]); err != nil {
 		Exit(err, 1)
 	}
 }
@@ -22,16 +30,13 @@ func init() {
 	RootCmd.AddCommand(diffCmd)
 }
 
-func diffAction(args []string) (err error) {
+func diffAction(commitAlias0, commitAlias1 string) (err error) {
 	selfRepo := SelfRepo()
-	if len(args) != 2 {
-		return errors.New("Usage: arciv diff [commit-id] [commit-id]")
-	}
-	commit0, err := selfRepo.LoadCommitFromAlias(args[0])
+	commit0, err := selfRepo.LoadCommitFromAlias(commitAlias0)
 	if err != nil {
 		return err
 	}
-	commit1, err := selfRepo.LoadCommitFromAlias(args[1])
+	commit1, err := selfRepo.LoadCommitFromAlias(commitAlias1)
 	if err != nil {
 		return err
 	}

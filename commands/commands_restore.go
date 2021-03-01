@@ -7,27 +7,24 @@ import (
 
 var (
 	restoreCmd = &cobra.Command{
-		Use: "restore",
-		Run: restoreCommand,
+		Use:   "restore <repository> <commit>",
+		Run:   restoreCommand,
+		Short: "Restore filles from the specified repository's commit.",
+		Long:  "Restore filles from the specified repository's commit with downloading files that don't exist on local.",
+		Args:  cobra.ExactArgs(2),
 	}
 )
 
 var dryRun bool
 
 func restoreCommand(cmd *cobra.Command, args []string) {
-	if err := restoreAction(args); err != nil {
+	if err := restoreAction(args[0], args[1]); err != nil {
 		Exit(err, 1)
 	}
 }
 
-func restoreAction(args []string) (err error) {
+func restoreAction(repoName, commitAlias string) (err error) {
 	selfRepo := SelfRepo()
-	// dryRun := false
-	if len(args) != 2 {
-		return errors.New("Usage: arciv restore [repository-name] [alias]")
-	}
-	repoName := args[0]
-	commitAlias := args[1]
 
 	// fetch remoteCommit
 	remoteRepo, err := findRepo(repoName)
@@ -96,5 +93,5 @@ func restoreAction(args []string) (err error) {
 
 func init() {
 	RootCmd.AddCommand(restoreCmd)
-	restoreCmd.PersistentFlags().BoolVarP(&dryRun, "dry-run", "d", false, "Show downloading files if you excute the subcommand 'restore'")
+	restoreCmd.Flags().BoolVarP(&dryRun, "dry-run", "d", false, "Show downloading files if you excute the subcommand 'restore'")
 }

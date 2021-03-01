@@ -9,8 +9,11 @@ import (
 
 var (
 	unstashCmd = &cobra.Command{
-		Use: "unstash",
-		Run: unstashCommand,
+		Use:   "unstash",
+		Run:   unstashCommand,
+		Short: "Unstash latest commit's files from .arciv/blob directory",
+		Long:  "Move files from .arciv/blob directory to the self repository based on the file list of the latest commit",
+		Args:  cobra.NoArgs,
 	}
 )
 

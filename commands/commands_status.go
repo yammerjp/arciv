@@ -6,8 +6,11 @@ import (
 
 var (
 	statusCmd = &cobra.Command{
-		Use: "status",
-		Run: statusCommand,
+		Use:   "status",
+		Run:   statusCommand,
+		Short: "Print difference of files from the latest commit.",
+		Long:  "Print difference of files from the latest commit.",
+		Args:  cobra.NoArgs,
 	}
 )
 

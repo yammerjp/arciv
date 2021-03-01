@@ -7,8 +7,12 @@ import (
 
 var (
 	initCmd = &cobra.Command{
-		Use: "init",
-		Run: initCommand,
+		Use:   "init",
+		Run:   initCommand,
+		Short: "Initialize a repository",
+		Long: `Initialize a repository.
+The repository's root directory specifies the current directory by generating '.arciv' directory on the current directory.`,
+		Args: cobra.NoArgs,
 	}
 )
 
