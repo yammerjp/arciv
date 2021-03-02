@@ -22,6 +22,7 @@ func statusCommand(cmd *cobra.Command, args []string) {
 
 func init() {
 	RootCmd.AddCommand(statusCmd)
+	statusCmd.Flags().BoolVarP(&simplyPrinting, "simple", "s", false, "Print simply")
 }
 
 func statusAction() (err error) {

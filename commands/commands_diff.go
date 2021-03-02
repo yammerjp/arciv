@@ -20,6 +20,8 @@ If a part of commit-id points more than 1 commit, an error occurs. `,
 	}
 )
 
+var simplyPrinting bool
+
 func diffCommand(cmd *cobra.Command, args []string) {
 	if err := diffAction(args[0], args[1]); err != nil {
 		Exit(err, 1)
@@ -28,6 +30,7 @@ func diffCommand(cmd *cobra.Command, args []string) {
 
 func init() {
 	RootCmd.AddCommand(diffCmd)
+	diffCmd.Flags().BoolVarP(&simplyPrinting, "simple", "s", false, "Print simply")
 }
 
 func diffAction(commitAlias0, commitAlias1 string) (err error) {
@@ -72,6 +75,16 @@ func diffTags(tagsBefore, tagsAfter []Tag) (deleted []Tag, added []Tag) {
 }
 
 func printDiffs(deleted, added []Tag) {
+	if simplyPrinting {
+		for _, c := range deleted {
+			messageStdin("\x1b[31m" + "- " + c.String() + "\x1b[0m")
+		}
+		for _, c := range added {
+			messageStdin("\x1b[32m" + "+ " + c.String() + "\x1b[0m")
+		}
+		return
+	}
+
 	for _, dc := range deleted {
 		// same hash
 		idx := findTagIndex(added, dc, FIND_HASH|FIND_PATH)
@@ -99,14 +112,5 @@ func printDiffs(deleted, added []Tag) {
 	// similar tag is not found
 	for _, ac := range added {
 		messageStdin("\x1b[32madded: " + ac.Path + ", hash: " + ac.Hash.String() + "\x1b[0m")
-	}
-}
-
-func printDiffsSimple(deleted, added []Tag) {
-	for _, c := range deleted {
-		messageStdin("\x1b[31m" + "- " + c.String() + "\x1b[0m")
-	}
-	for _, c := range added {
-		messageStdin("\x1b[32m" + "+ " + c.String() + "\x1b[0m")
 	}
 }
