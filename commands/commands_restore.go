@@ -90,9 +90,11 @@ func restoreAction(repoName, commitAlias string) (err error) {
 
 	// rename and copy
 	err = unstashTags(remoteCommit.Tags)
+	if err != nil {
+		return err
+	}
 
-	// FIXME: Add the restored commit to local timeline
-	return nil
+	return selfRepo.AddCommit(remoteCommit)
 }
 
 func init() {

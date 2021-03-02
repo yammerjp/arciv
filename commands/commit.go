@@ -16,44 +16,6 @@ type Commit struct {
 	Tags      []Tag
 }
 
-func createCommit() (Commit, error) {
-	selfRepo := SelfRepo()
-	commit, err := createCommitStructure()
-	if err != nil {
-		return Commit{}, err
-	}
-
-	commitIds, err := selfRepo.LoadTimeline()
-	if err != nil {
-		return Commit{}, err
-	}
-	for _, cId := range commitIds {
-		if cId[9:] == commit.Hash.String() {
-			message("Committing is canceled. A commit that same directory structure already exists")
-			return selfRepo.LoadCommit(cId)
-		}
-	}
-	var baseCommit *Commit
-	if len(commitIds) > 0 {
-		c, err := selfRepo.LoadCommit(commitIds[len(commitIds)-1])
-		if err != nil {
-			return Commit{}, err
-		}
-		baseCommit = &c
-	}
-
-	err = selfRepo.WriteTags(commit, baseCommit)
-	if err != nil {
-		return Commit{}, err
-	}
-	err = selfRepo.AddTimeline(commit)
-	if err != nil {
-		return Commit{}, err
-	}
-	message("created commit '" + commit.Id + "'")
-	return commit, nil
-}
-
 func createCommitStructure() (Commit, error) {
 	// Tags
 	tags, err := taggingsSelfRepo()

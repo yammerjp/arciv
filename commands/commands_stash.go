@@ -23,10 +23,17 @@ func stashCommand(cmd *cobra.Command, args []string) {
 }
 
 func stashAction() (err error) {
-	commit, err := createCommit()
+	commit, err := createCommitStructure()
 	if err != nil {
 		return err
 	}
+
+	err = SelfRepo().AddCommit(commit)
+	if err != nil {
+		return err
+	}
+	message("created commit '" + commit.Id + "'")
+
 	err = stashTags(commit.Tags)
 	if err != nil {
 		return err

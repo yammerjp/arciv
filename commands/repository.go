@@ -26,17 +26,42 @@ func (repository Repository) String() string {
 	}
 }
 
-func (repository Repository) AddTimeline(commit Commit) error {
-	if repository.PathType != PATH_FILE {
-		return errors.New("Repository's PathType must be PATH_FILE")
-	}
-
-	// TODO: 既に存在していたら追記しない
+func (repository Repository) AddCommit(commit Commit) error {
 	timeline, err := repository.LoadTimeline()
 	if err != nil {
 		return err
 	}
-	timeline = append(timeline, commit.Id)
+
+	if isIncluded(timeline, commit.Id) {
+		message("The commit " + commit.Id + " already exists in the timeline of the repository " + repository.Name)
+		return nil
+	}
+
+	latestCommitId := timeline[len(timeline)-1]
+	if latestCommitId[9:] == commit.Hash.String() {
+		message("Committing is canceled. A commit that same directory structure already exists")
+		return nil
+	}
+
+	var baseCommit *Commit
+	if len(timeline) > 0 {
+		c, err := repository.LoadCommit(latestCommitId)
+		if err != nil {
+			return err
+		}
+		baseCommit = &c
+	}
+	err = repository.WriteTags(commit, baseCommit)
+	if err != nil {
+		return err
+	}
+	return repository.WriteTimeline(append(timeline, commit.Id))
+}
+
+func (repository Repository) WriteTimeline(timeline []string) error {
+	if repository.PathType != PATH_FILE {
+		return errors.New("Repository's PathType must be PATH_FILE")
+	}
 	return writeLines(repository.Path+"/.arciv/timeline", timeline)
 }
 
