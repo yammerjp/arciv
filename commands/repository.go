@@ -94,10 +94,6 @@ func (repository Repository) WriteTags(commit Commit, base *Commit) error {
 	if repository.PathType != PATH_FILE {
 		return errors.New("Repository's PathType must be PATH_FILE")
 	}
-	// don't write if file already exists
-	if Exists(repository.Path + "/.arciv/list/" + commit.Id) {
-		return nil
-	}
 	return writeLines(repository.Path+"/.arciv/list/"+commit.Id, lines)
 }
 
@@ -217,10 +213,7 @@ func (repository Repository) FetchBlobHashes() ([]string, error) {
 	if repository.PathType != PATH_FILE {
 		return []string{}, errors.New("Repository's PathType must be PATH_FILE")
 	}
-
-	//   - .arciv/blob が無ければ掘る
-	//   - repository の .arciv/blob のファイル一覧を取得する
-	return lsWithoutDir(repository.Path + "/.arciv/blob")
+	return findFilePaths(repository.Path + "/.arciv/blob")
 }
 
 func (repository Repository) sendLocalBlobs(tags []Tag) error {

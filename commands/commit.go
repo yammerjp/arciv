@@ -3,8 +3,6 @@ package commands
 import (
 	"crypto/sha256"
 	"fmt"
-	"io"
-	"os"
 	"sort"
 	"time"
 )
@@ -16,10 +14,18 @@ type Commit struct {
 	Tags      []Tag
 }
 
+var timestampNow func() int64
+
+func init() {
+	timestampNow = func() int64 {
+		return time.Now().Unix()
+	}
+}
+
 func createCommitStructure() (Commit, error) {
 	// Tags
 	selfRepo := SelfRepo()
-	paths, err := findPathsOfSelfRepo(true, false)
+	paths, err := findFilePaths(selfRepo.Path)
 	if err != nil {
 		return Commit{}, err
 	}
@@ -42,7 +48,7 @@ func createCommitStructure() (Commit, error) {
 	}
 	hash := Hash(hasher.Sum(nil))
 	// Timestamp
-	timestamp := time.Now().Unix()
+	timestamp := timestampNow()
 
 	return Commit{
 		Id:        timestamp2string(timestamp) + "-" + hash.String(),
@@ -53,25 +59,18 @@ func createCommitStructure() (Commit, error) {
 }
 
 func tagging(root, relativePath string) (Tag, error) {
+	path := root + "/" + relativePath
 	// hash
-	hasher := sha256.New()
-	f, err := os.Open(root + "/" + relativePath)
+	hash, err := hashFile(path)
 	if err != nil {
 		return Tag{}, err
 	}
-	_, err = io.Copy(hasher, f)
-	if err != nil {
-		return Tag{}, err
-	}
-	hash := hasher.Sum(nil)
-	f.Close()
 
 	//timestamp
-	fileInfo, err := os.Stat(root + "/" + relativePath)
+	timestamp, err := timestampFile(path)
 	if err != nil {
 		return Tag{}, err
 	}
-	timestamp := fileInfo.ModTime().Unix()
 
 	return Tag{
 		Path:      relativePath,

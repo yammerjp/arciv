@@ -2,7 +2,6 @@ package commands
 
 import (
 	"github.com/spf13/cobra"
-	"os"
 )
 
 var (
@@ -50,7 +49,7 @@ func stashTags(tags []Tag) (err error) {
 	for _, p := range tags {
 		from := selfRepo.Path + "/" + p.Path
 		to := selfRepo.Path + "/.arciv/blob/" + p.Hash.String()
-		err = os.Rename(from, to)
+		err = moveFile(from, to)
 		if err != nil {
 			return err
 		}
@@ -58,12 +57,12 @@ func stashTags(tags []Tag) (err error) {
 	}
 
 	// remove all directory in root without .arciv
-	dirPaths, err := findPathsOfSelfRepo(false, true)
+	dirPaths, err := findDirPaths(selfRepo.Path)
 	if err != nil {
 		return err
 	}
 	for i := len(dirPaths) - 1; i >= 0; i-- {
-		os.Remove(dirPaths[i])
+		removeFile(dirPaths[i])
 	}
 	return nil
 }

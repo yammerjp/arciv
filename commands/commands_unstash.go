@@ -3,7 +3,6 @@ package commands
 import (
 	"bytes"
 	"github.com/spf13/cobra"
-	"os"
 	"path/filepath"
 )
 
@@ -43,7 +42,7 @@ func unstashTags(tags []Tag) (err error) {
 		dirSet[filepath.Dir(tag.Path)] = struct{}{}
 	}
 	for dir, _ := range dirSet {
-		err = os.MkdirAll(dir, 0777)
+		err = mkdirAll(dir)
 		if err != nil {
 			return err
 		}
@@ -69,7 +68,7 @@ func unstashTags(tags []Tag) (err error) {
 			err = copyFile(from, to)
 			msg = "copied "
 		} else {
-			err = os.Rename(from, to)
+			err = moveFile(from, to)
 			msg = "moved "
 		}
 
