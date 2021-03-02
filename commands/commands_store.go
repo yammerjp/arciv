@@ -52,7 +52,7 @@ func storeAction(repoName string) (err error) {
 			tagsToSend = append(tagsToSend, tag)
 		}
 	}
-	err = remoteRepo.sendLocalBlobs(tagsToSend)
+	err = remoteRepo.SendLocalBlobs(tagsToSend)
 	if err != nil {
 		return err
 	}

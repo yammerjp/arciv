@@ -216,7 +216,7 @@ func (repository Repository) FetchBlobHashes() ([]string, error) {
 	return findFilePaths(repository.Path + "/.arciv/blob")
 }
 
-func (repository Repository) sendLocalBlobs(tags []Tag) error {
+func (repository Repository) SendLocalBlobs(tags []Tag) error {
 	if repository.PathType != PATH_FILE {
 		return errors.New("Repository's PathType must be PATH_FILE")
 	}

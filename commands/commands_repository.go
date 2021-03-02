@@ -84,8 +84,7 @@ func repositoryActionAdd(name string, url string) error {
 	if err != nil {
 		return err
 	}
-	repos = append(repos, repo)
-	return reposWrite(repos)
+	return writeRepos(append(repos, repo))
 }
 
 func repositoryActionRemove(name string) error {
@@ -102,9 +101,21 @@ func repositoryActionRemove(name string) error {
 		}
 		// delete repos[i]
 		repos = append(repos[:i], repos[i+1:]...)
-		return reposWrite(repos)
+		return writeRepos(repos)
 	}
 	return errors.New("The repository is not found")
+}
+
+func createRepoStruct(name string, url string) (Repository, error) {
+	var path string
+	var pathType PathType
+	if strings.HasPrefix(url, "file://") {
+		path = url[len("file://"):]
+		pathType = PATH_FILE
+	} else {
+		return Repository{}, errors.New("Repository path must be file:///...")
+	}
+	return Repository{Name: name, Path: path, PathType: pathType}, nil
 }
 
 func loadRepos() ([]Repository, error) {
@@ -135,18 +146,6 @@ func loadRepos() ([]Repository, error) {
 	return repos, nil
 }
 
-func createRepoStruct(name string, url string) (Repository, error) {
-	var path string
-	var pathType PathType
-	if strings.HasPrefix(url, "file://") {
-		path = url[len("file://"):]
-		pathType = PATH_FILE
-	} else {
-		return Repository{}, errors.New("Repository path must be file:///...")
-	}
-	return Repository{Name: name, Path: path, PathType: pathType}, nil
-}
-
 func findRepo(name string) (Repository, error) {
 	repos, err := loadRepos()
 	if err != nil {
@@ -160,7 +159,7 @@ func findRepo(name string) (Repository, error) {
 	return Repository{}, errors.New("Repository is not found")
 }
 
-func reposWrite(repos []Repository) error {
+func writeRepos(repos []Repository) error {
 	var lines []string
 	for _, repo := range repos {
 		if repo.Name == "self" {
