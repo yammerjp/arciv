@@ -76,37 +76,37 @@ func printDiffs(deleted, added []Tag) {
 		// same hash
 		idx := findTagIndex(added, dc, FIND_HASH|FIND_PATH)
 		if idx != -1 {
-			message("update: " + dc.Path + ", hash: " + dc.Hash.String() + ", timestamp: \x1b[31m" + timestamp2string(dc.Timestamp) + "\x1b[0m -> \x1b[32m" + timestamp2string(added[idx].Timestamp) + "\x1b[0m")
+			messageStdin("update: " + dc.Path + ", hash: " + dc.Hash.String() + ", timestamp: \x1b[31m" + timestamp2string(dc.Timestamp) + "\x1b[0m -> \x1b[32m" + timestamp2string(added[idx].Timestamp) + "\x1b[0m")
 			added = append(added[:idx], added[idx+1:]...)
 			continue
 		}
 		idx = findTagIndex(added, dc, FIND_HASH)
 		if idx != -1 {
-			message("rename: \x1b[31m" + dc.Path + "\x1b[0m -> \x1b[32m" + added[idx].Path + "\x1b[0m, hash: " + dc.Hash.String())
+			messageStdin("rename: \x1b[31m" + dc.Path + "\x1b[0m -> \x1b[32m" + added[idx].Path + "\x1b[0m, hash: " + dc.Hash.String())
 			added = append(added[:idx], added[idx+1:]...)
 			continue
 		}
 		// same path, but not same hash
 		idx = findTagIndex(added, dc, FIND_PATH)
 		if idx != -1 {
-			message("rewrite: " + dc.Path + ", hash: \x1b[31m" + dc.Hash.String() + "\x1b[0m -> \x1b[32m" + added[idx].Hash.String() + "\x1b[0m")
+			messageStdin("rewrite: " + dc.Path + ", hash: \x1b[31m" + dc.Hash.String() + "\x1b[0m -> \x1b[32m" + added[idx].Hash.String() + "\x1b[0m")
 			added = append(added[:idx], added[idx+1:]...)
 			continue
 		}
 		// similar tag is not found
-		message("\x1b[31mdeleted: " + dc.Path + ", hash: " + dc.Hash.String() + "\x1b[0m")
+		messageStdin("\x1b[31mdeleted: " + dc.Path + ", hash: " + dc.Hash.String() + "\x1b[0m")
 	}
 	// similar tag is not found
 	for _, ac := range added {
-		message("\x1b[32madded: " + ac.Path + ", hash: " + ac.Hash.String() + "\x1b[0m")
+		messageStdin("\x1b[32madded: " + ac.Path + ", hash: " + ac.Hash.String() + "\x1b[0m")
 	}
 }
 
 func printDiffsSimple(deleted, added []Tag) {
 	for _, c := range deleted {
-		message("\x1b[31m" + "- " + c.String() + "\x1b[0m")
+		messageStdin("\x1b[31m" + "- " + c.String() + "\x1b[0m")
 	}
 	for _, c := range added {
-		message("\x1b[32m" + "+ " + c.String() + "\x1b[0m")
+		messageStdin("\x1b[32m" + "+ " + c.String() + "\x1b[0m")
 	}
 }
