@@ -32,6 +32,7 @@ func restoreAction(repoName, commitAlias string) (err error) {
 	if err != nil {
 		return err
 	}
+
 	remoteCommit, err := remoteRepo.LoadCommitFromAlias(commitAlias)
 	if err != nil {
 		return err

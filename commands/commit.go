@@ -18,10 +18,23 @@ type Commit struct {
 
 func createCommitStructure() (Commit, error) {
 	// Tags
-	tags, err := taggingsSelfRepo()
+	selfRepo := SelfRepo()
+	paths, err := findPathsOfSelfRepo(true, false)
 	if err != nil {
 		return Commit{}, err
 	}
+	var tags []Tag
+	for _, path := range paths {
+		tag, err := tagging(selfRepo.Path, path)
+		if err != nil {
+			return Commit{}, err
+		}
+		tags = append(tags, tag)
+	}
+	sort.Slice(tags, func(i, j int) bool {
+		return compareTag(tags[i], tags[j]) < 0
+	})
+
 	// Hash
 	hasher := sha256.New()
 	for _, tag := range tags {
@@ -39,31 +52,10 @@ func createCommitStructure() (Commit, error) {
 	}, nil
 }
 
-func taggingsSelfRepo() ([]Tag, error) {
-	selfRepo := SelfRepo()
-	paths, err := findPathsOfSelfRepo(true, false)
-	if err != nil {
-		return []Tag{}, err
-	}
-
-	var tags []Tag
-	for _, path := range paths {
-		tag, err := tagging(selfRepo.Path, path)
-		if err != nil {
-			return []Tag{}, err
-		}
-		tags = append(tags, tag)
-	}
-	sort.Slice(tags, func(i, j int) bool {
-		return compareTag(tags[i], tags[j]) < 0
-	})
-	return tags, nil
-}
-
-func tagging(root, path string) (Tag, error) {
+func tagging(root, relativePath string) (Tag, error) {
 	// hash
 	hasher := sha256.New()
-	f, err := os.Open(root + "/" + path)
+	f, err := os.Open(root + "/" + relativePath)
 	if err != nil {
 		return Tag{}, err
 	}
@@ -75,14 +67,14 @@ func tagging(root, path string) (Tag, error) {
 	f.Close()
 
 	//timestamp
-	fileInfo, err := os.Stat(root + "/" + path)
+	fileInfo, err := os.Stat(root + "/" + relativePath)
 	if err != nil {
 		return Tag{}, err
 	}
 	timestamp := fileInfo.ModTime().Unix()
 
 	return Tag{
-		Path:      path,
+		Path:      relativePath,
 		Hash:      hash,
 		Timestamp: timestamp,
 	}, nil

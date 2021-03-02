@@ -25,7 +25,7 @@ func init() {
 }
 
 func statusAction() (err error) {
-	nowTags, err := taggingsSelfRepo()
+	nowCommit, err := createCommitStructure()
 	if err != nil {
 		return err
 	}
@@ -35,7 +35,7 @@ func statusAction() (err error) {
 		return err
 	}
 
-	deleted, added := diffTags(latestCommit.Tags, nowTags)
+	deleted, added := diffTags(latestCommit.Tags, nowCommit.Tags)
 	printDiffs(deleted, added)
 	return nil
 }

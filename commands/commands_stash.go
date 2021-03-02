@@ -45,7 +45,6 @@ func stashAction() (err error) {
 
 func stashTags(tags []Tag) (err error) {
 	selfRepo := SelfRepo()
-	os.MkdirAll(selfRepo.Path+"/.arciv/blob", 0777)
 
 	// move all files to .arciv/blob
 	for _, p := range tags {
@@ -64,9 +63,7 @@ func stashTags(tags []Tag) (err error) {
 		return err
 	}
 	for i := len(dirPaths) - 1; i >= 0; i-- {
-		if os.Remove(dirPaths[i]) == nil {
-			message("remove directory, " + dirPaths[i])
-		}
+		os.Remove(dirPaths[i])
 	}
 	return nil
 }

@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"errors"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -22,36 +23,39 @@ func initCommand(cmd *cobra.Command, args []string) {
 	}
 }
 
-func initAction() (err error) {
-	err = mkdir(".arciv")
+func initAction() error {
+	currentDir, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-	err = mkdir(".arciv/list")
+	return Repository{Name: "self", Path: currentDir, PathType: PATH_FILE}.Init()
+}
+
+func (repository Repository) Init() error {
+	if repository.PathType != PATH_FILE {
+		return errors.New("Repository's PathType must be PATH_FILE")
+	}
+
+	err := os.MkdirAll(repository.Path+"/.arciv/list", 0777)
+	if err != nil {
+		return err
+	}
+	err = os.MkdirAll(repository.Path+"/.arciv/blob", 0777)
 	if err != nil {
 		return err
 	}
 
-	fR, err := os.Create(".arciv/repositories")
+	fR, err := os.Create(repository.Path + "/.arciv/repositories")
 	if err != nil {
 		return err
 	}
 	defer fR.Close()
 
-	fC, err := os.Create(".arciv/timeline")
+	fC, err := os.Create(repository.Path + "/.arciv/timeline")
 	if err != nil {
 		return err
 	}
 	defer fC.Close()
-	return nil
-}
-
-func mkdir(path string) error {
-	err := os.Mkdir(path, 0777)
-	if err != nil {
-		message("Failed to create directory '" + path + "'")
-		return err
-	}
 	return nil
 }
 

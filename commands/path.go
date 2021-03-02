@@ -57,7 +57,6 @@ func findPathsOfSelfRepo(includeFile, includeDir bool) (relativePaths []string, 
 }
 
 func lsWithoutDir(dir string) (filenames []string, err error) {
-	os.MkdirAll(dir, 0777)
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return []string{}, err
@@ -95,7 +94,6 @@ func loadLines(path string) ([]string, error) {
 }
 
 func writeLines(path string, lines []string) error {
-	os.MkdirAll(filepath.Dir(path), 0777)
 	file, err := os.Create(path)
 	if err != nil {
 		return err

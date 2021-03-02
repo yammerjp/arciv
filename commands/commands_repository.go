@@ -80,6 +80,10 @@ func repositoryActionAdd(name string, url string) error {
 	if err != nil {
 		return err
 	}
+	err = repo.Init()
+	if err != nil {
+		return err
+	}
 	repos = append(repos, repo)
 	return reposWrite(repos)
 }
