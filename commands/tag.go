@@ -46,6 +46,7 @@ func timestamp2string(t int64) string {
 	return fmt.Sprintf("%.8x", t)
 }
 
+// priority  hash > timestamp > path
 func compareTag(p0, p1 Tag) int {
 	compared := bytes.Compare(p0.Hash, p1.Hash)
 	if compared != 0 {
