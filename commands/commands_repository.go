@@ -119,7 +119,7 @@ func createRepoStruct(name string, url string) (Repository, error) {
 }
 
 func loadRepos() ([]Repository, error) {
-	lines, err := loadLines(rootDir() + "/.arciv/repositories")
+	lines, err := fileOp.loadLines(fileOp.rootDir() + "/.arciv/repositories")
 	if err != nil {
 		return []Repository{}, err
 	}
@@ -167,5 +167,5 @@ func writeRepos(repos []Repository) error {
 		}
 		lines = append(lines, repo.String())
 	}
-	return writeLines(rootDir()+"/.arciv/repositories", lines)
+	return fileOp.writeLines(fileOp.rootDir()+"/.arciv/repositories", lines)
 }

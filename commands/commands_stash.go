@@ -49,7 +49,7 @@ func stashTags(tags []Tag) (err error) {
 	for _, p := range tags {
 		from := selfRepo.Path + "/" + p.Path
 		to := selfRepo.Path + "/.arciv/blob/" + p.Hash.String()
-		err = moveFile(from, to)
+		err = fileOp.moveFile(from, to)
 		if err != nil {
 			return err
 		}
@@ -57,12 +57,12 @@ func stashTags(tags []Tag) (err error) {
 	}
 
 	// remove all directory in root without .arciv
-	dirPaths, err := findDirPaths(selfRepo.Path)
+	dirPaths, err := fileOp.findDirPaths(selfRepo.Path)
 	if err != nil {
 		return err
 	}
 	for i := len(dirPaths) - 1; i >= 0; i-- {
-		removeFile(dirPaths[i])
+		fileOp.removeFile(dirPaths[i])
 	}
 	return nil
 }

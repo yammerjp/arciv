@@ -59,14 +59,14 @@ func (repository Repository) AddCommit(commit Commit) error {
 
 func (repository Repository) WriteTimeline(timeline []string) error {
 	if repository.PathType == PATH_FILE {
-		return writeLines(repository.Path+"/.arciv/timeline", timeline)
+		return fileOp.writeLines(repository.Path+"/.arciv/timeline", timeline)
 	}
 	return errors.New("Repository's PathType must be PATH_FILE")
 }
 
 func (repository Repository) LoadTimeline() ([]string, error) {
 	if repository.PathType == PATH_FILE {
-		return loadLines(repository.Path + "/.arciv/timeline")
+		return fileOp.loadLines(repository.Path + "/.arciv/timeline")
 	}
 	return []string{}, errors.New("Repository's PathType must be PATH_FILE")
 
@@ -91,7 +91,7 @@ func (repository Repository) WriteTags(commit Commit, base *Commit) error {
 	}
 
 	if repository.PathType == PATH_FILE {
-		return writeLines(repository.Path+"/.arciv/list/"+commit.Id, lines)
+		return fileOp.writeLines(repository.Path+"/.arciv/list/"+commit.Id, lines)
 	}
 	return errors.New("Repository's PathType must be PATH_FILE")
 }
@@ -99,7 +99,7 @@ func (repository Repository) WriteTags(commit Commit, base *Commit) error {
 func (repository Repository) LoadTags(commitId string) (tags []Tag, err error) {
 	var lines []string
 	if repository.PathType == PATH_FILE {
-		lines, err = loadLines(repository.Path + "/.arciv/list/" + commitId)
+		lines, err = fileOp.loadLines(repository.Path + "/.arciv/list/" + commitId)
 		if err != nil {
 			return []Tag{}, err
 		}
@@ -210,16 +210,16 @@ func (repository Repository) LoadCommit(commitId string) (Commit, error) {
 
 func (repository Repository) FetchBlobHashes() ([]string, error) {
 	if repository.PathType == PATH_FILE {
-		return findFilePaths(repository.Path + "/.arciv/blob")
+		return fileOp.findFilePaths(repository.Path + "/.arciv/blob")
 	}
 	return []string{}, errors.New("Repository's PathType must be PATH_FILE")
 }
 
 func (repository Repository) SendLocalBlob(tag Tag) error {
 	if repository.PathType == PATH_FILE {
-		from := rootDir() + "/" + tag.Path
+		from := fileOp.rootDir() + "/" + tag.Path
 		to := repository.Path + "/.arciv/blob/" + tag.Hash.String()
-		return copyFile(from, to)
+		return fileOp.copyFile(from, to)
 	}
 	return errors.New("Repository's PathType must be PATH_FILE")
 }
@@ -227,8 +227,8 @@ func (repository Repository) SendLocalBlob(tag Tag) error {
 func (repository Repository) ReceiveRemoteBlob(tag Tag) error {
 	if repository.PathType != PATH_FILE {
 		from := repository.Path + "/.arciv/blob/" + tag.Hash.String()
-		to := rootDir() + "/.arciv/blob/" + tag.Hash.String()
-		return copyFile(from, to)
+		to := fileOp.rootDir() + "/.arciv/blob/" + tag.Hash.String()
+		return fileOp.copyFile(from, to)
 	}
 	return errors.New("Repository's PathType must be PATH_FILE")
 }
@@ -257,5 +257,5 @@ func findCommitId(alias string, commitIds []string) (foundCId string, err error)
 }
 
 func SelfRepo() Repository {
-	return Repository{Name: "self", Path: rootDir(), PathType: PATH_FILE}
+	return Repository{Name: "self", Path: fileOp.rootDir(), PathType: PATH_FILE}
 }

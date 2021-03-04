@@ -42,7 +42,7 @@ func unstashTags(tags []Tag) (err error) {
 		dirSet[filepath.Dir(tag.Path)] = struct{}{}
 	}
 	for dir, _ := range dirSet {
-		err = mkdirAll(dir)
+		err = fileOp.mkdirAll(dir)
 		if err != nil {
 			return err
 		}
@@ -65,10 +65,10 @@ func unstashTags(tags []Tag) (err error) {
 
 		var msg string
 		if keepInBlobDir {
-			err = copyFile(from, to)
+			err = fileOp.copyFile(from, to)
 			msg = "copied "
 		} else {
-			err = moveFile(from, to)
+			err = fileOp.moveFile(from, to)
 			msg = "moved "
 		}
 
