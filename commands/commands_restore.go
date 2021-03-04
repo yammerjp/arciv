@@ -54,7 +54,7 @@ func restoreAction(repoName, commitAlias string) (err error) {
 		}
 	}
 
-	// filter blob hashes to recieve
+	// filter blob hashes to receive
 	localHashStrings, err := selfRepo.FetchBlobHashes()
 	if err != nil {
 		return err
@@ -62,10 +62,10 @@ func restoreAction(repoName, commitAlias string) (err error) {
 	for _, lTag := range localCommit.Tags {
 		localHashStrings = append(localHashStrings, lTag.Hash.String())
 	}
-	var blobsToRecieve []Tag
+	var blobsToReceive []Tag
 	for _, rTag := range remoteCommit.Tags {
 		if !isIncluded(localHashStrings, rTag.Hash.String()) {
-			blobsToRecieve = append(blobsToRecieve, rTag)
+			blobsToReceive = append(blobsToReceive, rTag)
 		}
 	}
 	// FIXME: Check remote blobs exists?....
@@ -73,14 +73,17 @@ func restoreAction(repoName, commitAlias string) (err error) {
 	// download
 	if dryRunning {
 		message("Show downloading files if you excute 'restore'.")
-		for _, b := range blobsToRecieve {
-			message("Download: " + b.Hash.String() + ", Will locate to: " + b.Path)
+		for _, tag := range blobsToReceive {
+			messageStdin("download: " + tag.Hash.String() + ", will locate to: " + tag.Path)
 		}
 		return nil
 	}
-	err = remoteRepo.ReceiveRemoteBlobs(blobsToRecieve)
-	if err != nil {
-		return err
+	for _, tag := range blobsToReceive {
+		err = remoteRepo.ReceiveRemoteBlob(tag)
+		if err != nil {
+			return err
+		}
+		message("downloaded: " + tag.Hash.String() + ", will locate to: " + tag.Path)
 	}
 
 	// mv all local files to .arciv/blob

@@ -46,15 +46,15 @@ func storeAction(repoName string) (err error) {
 	}
 
 	// send blobs not stored on remote repository
-	var tagsToSend []Tag
 	for _, tag := range commit.Tags {
-		if !isIncluded(remoteHashStrings, tag.Hash.String()) {
-			tagsToSend = append(tagsToSend, tag)
+		if isIncluded(remoteHashStrings, tag.Hash.String()) {
+			continue
 		}
-	}
-	err = remoteRepo.SendLocalBlobs(tagsToSend)
-	if err != nil {
-		return err
+		err = remoteRepo.SendLocalBlob(tag)
+		if err != nil {
+			return err
+		}
+		message("uploaded: " + tag.Hash.String() + ", " + tag.Path)
 	}
 
 	return remoteRepo.AddCommit(commit)
