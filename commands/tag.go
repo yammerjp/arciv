@@ -66,20 +66,23 @@ func compareTag(p0, p1 Tag) int {
 type FindField int
 
 const (
-	FIND_PATH      FindField = 0x0001
-	FIND_HASH      FindField = 0x0010
-	FIND_TIMESTAMP FindField = 0x0100
+	FIND_PATH      FindField = 0x001
+	FIND_HASH      FindField = 0x010
+	FIND_TIMESTAMP FindField = 0x100
 )
 
 func findTagIndex(tags []Tag, comparingTag Tag, flag FindField) int {
+	if flag == 0x000 {
+		return -1
+	}
 	for i, p := range tags {
-		if (flag&FIND_HASH) != 0000 && bytes.Compare(p.Hash, comparingTag.Hash) != 0 {
+		if (flag&FIND_HASH) != 0x000 && bytes.Compare(p.Hash, comparingTag.Hash) != 0 {
 			continue
 		}
-		if (flag&FIND_TIMESTAMP) != 0000 && p.Timestamp != comparingTag.Timestamp {
+		if (flag&FIND_TIMESTAMP) != 0x000 && p.Timestamp != comparingTag.Timestamp {
 			continue
 		}
-		if (flag&FIND_PATH) != 0x0000 && p.Path != comparingTag.Path {
+		if (flag&FIND_PATH) != 0x000 && p.Path != comparingTag.Path {
 			continue
 		}
 		return i

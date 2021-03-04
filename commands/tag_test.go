@@ -52,6 +52,7 @@ func TestTag(t *testing.T) {
 
 	// func str2timestamp(str string) (int64, error)
 	// func timestamp2string(t int64) string
+	// TODO: Need test cases
 
 	// func compareTag(p0, p1 Tag) int
 	// compareTag(p0, p1) ... p0 - p1
@@ -145,4 +146,65 @@ func TestTag(t *testing.T) {
 	})
 
 	// func findTagIndex(tags []Tag, comparingTag Tag, flag FindField) int
+	tag9 := Tag{Path: "9999/9999/9999/9999", Hash: hashing("9999999999999999999999999999999999999999999999999999999999999999"), Timestamp: 0x99999999}
+	tag0 := Tag{Path: "8888/8888/8888/8888", Hash: hashing("8888888888888888888888888888888888888888888888888888888888888888"), Timestamp: 0x88888888}
+	tag1 := Tag{Path: "1111/1111/1111/1111", Hash: hashing("1111111111111111111111111111111111111111111111111111111111111111"), Timestamp: 0x11111111}
+	tag2 := Tag{Path: "2222/2222/2222/2222", Hash: hashing("2222222222222222222222222222222222222222222222222222222222222222"), Timestamp: 0x22222222}
+	tag3 := Tag{Path: "3333/3333/3333/3333", Hash: hashing("3333333333333333333333333333333333333333333333333333333333333333"), Timestamp: 0x33333333}
+	tags := []Tag{tag0, tag1, tag2, tag3}
+	t.Run("findTagIndex(tags []Tag, comparingTag Tag, flag FindField) int", func(t *testing.T) {
+		// flag needs any specifier
+		got := findTagIndex(tags, tag0, 0)
+		if got != -1 {
+			t.Errorf("findTagIndex(tags, tag0, 0) = %d, want -1", got)
+		}
+
+		// do not find tag9 in tags
+		got = findTagIndex(tags, tag9, FIND_PATH)
+		if got != -1 {
+			t.Errorf("findTagIndex(tags, tag9, FIND_PATH) = %d, want -1", got)
+		}
+		got = findTagIndex(tags, tag9, FIND_HASH)
+		if got != -1 {
+			t.Errorf("findTagIndex(tags, tag9, FIND_HASH) = %d, want -1", got)
+		}
+		got = findTagIndex(tags, tag9, FIND_TIMESTAMP)
+		if got != -1 {
+			t.Errorf("findTagIndex(tags, tag9, FIND_TIMESTAMP) = %d, want -1", got)
+		}
+
+		// find with single specifier
+		got = findTagIndex(tags, Tag{Path: "2222/2222/2222/2222", Hash: tag9.Hash, Timestamp: tag9.Timestamp}, FIND_PATH)
+		if got != 2 {
+			t.Errorf("findTagIndex(tags, Tag{Path:\"2222/2222/2222/2222\" ...}, FIND_PATH) = %d, want 2", got)
+		}
+		got = findTagIndex(tags, Tag{Hash: hashing("2222222222222222222222222222222222222222222222222222222222222222")}, FIND_HASH)
+		if got != 2 {
+			t.Errorf("findTagIndex(tags, Tag{Hash:hashing(\"2222222222222222222222222222222222222222222222222222222222222222\")}, FIND_HASH) = %d, want 2", got)
+		}
+		got = findTagIndex(tags, Tag{Timestamp: 0x22222222}, FIND_TIMESTAMP)
+		if got != 2 {
+			t.Errorf("findTagIndex(tag, Tag{Timestamp:0x22222222}, FIND_TIMESTAMP) = %d, want 2", got)
+		}
+
+		// find with multiple specifiers
+		got = findTagIndex(tags, Tag{Path: "1111/1111/1111/1111", Hash: hashing("1111111111111111111111111111111111111111111111111111111111111111")}, FIND_PATH|FIND_HASH)
+		if got != 1 {
+			t.Errorf("findTagIndex(tag, Tag{Path:\"1111/1111/1111/1111\", Hash:hashing(\"1111111111111111111111111111111111111111111111111111111111111111\")}, FIND_PATH|FIND_HASH) = %d, want 1", got)
+		}
+		got = findTagIndex(tags, Tag{Hash: hashing("1111111111111111111111111111111111111111111111111111111111111111"), Timestamp: 0x11111111}, FIND_HASH|FIND_TIMESTAMP)
+		if got != 1 {
+			t.Errorf("findTagIndex(tags, Tag{Hash:hashing(\"1111111111111111111111111111111111111111111111111111111111111111\"), Timestamp:0x11111111}, FIND_HASH|FIND_TIMESTAMP) = %d, want 1", got)
+		}
+		got = findTagIndex(tags, tag1, FIND_PATH|FIND_HASH|FIND_TIMESTAMP)
+		if got != 1 {
+			t.Errorf("findTagIndex(tags, tag1, FIND_PATH|FIND_HASH|FIND_TIMESTAMP) = %d, want 1", got)
+		}
+
+		// do not find with invalid specifiers
+		got = findTagIndex(tags, Tag{Path: "2222/2222/2222/2222", Hash: hashing("2222222222222222222222222222222222222222222222222222222222222222")}, FIND_HASH|FIND_TIMESTAMP)
+		if got != -1 {
+			t.Errorf("findTagIndex(tags, Tag{Path: \"2222/2222/2222/2222\", Hash: hashing(\"2222222222222222222222222222222222222222222222222222222222222222\")}, FIND_HASH|FIND_TIMESTAMP) = %d, want -1", got)
+		}
+	})
 }
