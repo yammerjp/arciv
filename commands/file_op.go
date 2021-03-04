@@ -49,7 +49,7 @@ func messageStdin(str string) {
 	fmt.Println(str)
 }
 
-type Fileio struct {
+type FileOp struct {
 	copyFile      func(from, to string) error
 	moveFile      func(from, to string) error
 	removeFile    func(path string) error
@@ -63,10 +63,10 @@ type Fileio struct {
 	rootDir       func() string
 }
 
-var fileOp *Fileio
+var fileOp *FileOp
 
 func init() {
-	fileOp = &Fileio{
+	fileOp = &FileOp{
 		copyFile: func(from, to string) error {
 			w, err := os.Create(to)
 			if err != nil {

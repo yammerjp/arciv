@@ -51,8 +51,9 @@ func TestTag(t *testing.T) {
 	})
 
 	// func str2timestamp(str string) (int64, error)
+	// str2timestamp() is called in Tag.String()
 	// func timestamp2string(t int64) string
-	// TODO: Need test cases
+	// timestamp2string() is called in str2Tag()
 
 	// func compareTag(p0, p1 Tag) int
 	// compareTag(p0, p1) ... p0 - p1
