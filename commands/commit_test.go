@@ -4,16 +4,6 @@ import (
 	"testing"
 )
 
-/*
-func hashing(hexStr string) Hash {
-	hash, err := hex2hash(hexStr)
-	if err != nil {
-		panic(err)
-	}
-	return hash
-}
-*/
-
 func TestCommit(t *testing.T) {
 	// var timestampNow func() int64
 	// stub

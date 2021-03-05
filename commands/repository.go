@@ -2,6 +2,7 @@ package commands
 
 import (
 	"errors"
+	"sort"
 	"strings"
 )
 
@@ -36,14 +37,13 @@ func (repository Repository) AddCommit(commit Commit) error {
 		return nil
 	}
 
-	latestCommitId := timeline[len(timeline)-1]
-	if latestCommitId[9:] == commit.Hash.String() {
-		message("Committing is canceled. A commit that same directory structure already exists")
-		return nil
-	}
-
 	var baseCommit *Commit
 	if len(timeline) > 0 {
+		latestCommitId := timeline[len(timeline)-1]
+		if latestCommitId[9:] == commit.Hash.String() {
+			message("Committing is canceled. A commit that same directory structure already exists")
+			return nil
+		}
 		c, err := repository.LoadCommit(latestCommitId)
 		if err != nil {
 			return err
@@ -155,6 +155,10 @@ func (repository Repository) LoadTagsFromExtension(baseCommitId string, body []s
 			return []Tag{}, errors.New("Lines of a commit of extension tag list must be started with '+' or '-'")
 		}
 	}
+	sort.Slice(tags, func(i, j int) bool {
+		return compareTag(tags[i], tags[j]) < 0
+	})
+
 	return tags, nil
 }
 
@@ -215,6 +219,7 @@ func (repository Repository) FetchBlobHashes() ([]string, error) {
 	return []string{}, errors.New("Repository's PathType must be PATH_FILE")
 }
 
+// send from repository's root directory
 func (repository Repository) SendLocalBlob(tag Tag) error {
 	if repository.PathType == PATH_FILE {
 		from := fileOp.rootDir() + "/" + tag.Path
@@ -224,8 +229,9 @@ func (repository Repository) SendLocalBlob(tag Tag) error {
 	return errors.New("Repository's PathType must be PATH_FILE")
 }
 
+// receive to .arciv/blob
 func (repository Repository) ReceiveRemoteBlob(tag Tag) error {
-	if repository.PathType != PATH_FILE {
+	if repository.PathType == PATH_FILE {
 		from := repository.Path + "/.arciv/blob/" + tag.Hash.String()
 		to := fileOp.rootDir() + "/.arciv/blob/" + tag.Hash.String()
 		return fileOp.copyFile(from, to)
