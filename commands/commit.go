@@ -12,6 +12,7 @@ type Commit struct {
 	Timestamp int64
 	Hash      Hash
 	Tags      []Tag
+	Depth     int // memo chained commit depth. use in #arciv-commit-extension
 }
 
 var timestampNow func() int64
@@ -55,6 +56,7 @@ func createCommitStructure() (Commit, error) {
 		Timestamp: timestamp,
 		Hash:      hash,
 		Tags:      tags,
+		Depth:     0,
 	}, nil
 }
 

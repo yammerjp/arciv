@@ -203,19 +203,22 @@ func TestRepository(t *testing.T) {
 	// func (repository Repository) LoadTagsFromExtension(baseCommitId string, body []string) ([]Tag, error)
 	// use fileOp.loadLines()
 	t.Run("Repository.LoadTags()", func(t *testing.T) {
-		got, err := repo.LoadTags("eeeeeeee-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+		got, gotDepth, err := repo.LoadTags("eeeeeeee-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
 		if err != nil {
 			t.Errorf("Repository.LoadTags() return an error \"%s\", want nil", err)
 		}
 		if len(got) != 7 ||
 			got[0].Hash.String() != "0000000000000000000000000000000000000000000000000000000000000000" || got[0].Timestamp != 0x00000000 || got[0].Path != "0000/0000" ||
 			got[1].Hash.String() != "1111111111111111111111111111111111111111111111111111111111111111" || got[1].Timestamp != 0x11111111 || got[1].Path != "1111/1111" ||
-			got[2].Hash.String() != "2222222222222222222222222222222222222222222222222222222222222222" || got[2].Timestamp != 0x22222222 || got[2].Path != "2222/2222" ||
-			got[3].Hash.String() != "3333333333333333333333333333333333333333333333333333333333333333" || got[3].Timestamp != 0x33333333 || got[3].Path != "3333/3333" ||
-			got[4].Hash.String() != "4444444444444444444444444444444444444444444444444444444444444444" || got[4].Timestamp != 0x44444444 || got[4].Path != "4444/4444" ||
-			got[5].Hash.String() != "5555555555555555555555555555555555555555555555555555555555555555" || got[5].Timestamp != 0x55555555 || got[5].Path != "5555/5555" ||
-			got[6].Hash.String() != "6666666666666666666666666666666666666666666666666666666666666666" || got[6].Timestamp != 0x66666666 || got[6].Path != "6666/6666" {
+			got[2].Hash.String() != "6666666666666666666666666666666666666666666666666666666666666666" || got[2].Timestamp != 0x66666666 || got[2].Path != "6666/6666" ||
+			got[3].Hash.String() != "2222222222222222222222222222222222222222222222222222222222222222" || got[3].Timestamp != 0x22222222 || got[3].Path != "2222/2222" ||
+			got[4].Hash.String() != "5555555555555555555555555555555555555555555555555555555555555555" || got[4].Timestamp != 0x55555555 || got[4].Path != "5555/5555" ||
+			got[5].Hash.String() != "3333333333333333333333333333333333333333333333333333333333333333" || got[5].Timestamp != 0x33333333 || got[5].Path != "3333/3333" ||
+			got[6].Hash.String() != "4444444444444444444444444444444444444444444444444444444444444444" || got[6].Timestamp != 0x44444444 || got[6].Path != "4444/4444" {
 			t.Errorf("Repository.LoadTags() = %s", got)
+		}
+		if gotDepth != 2 {
+			t.Errorf("Repository.LoadTags() return depth: %d, want 2", gotDepth)
 		}
 	})
 
@@ -229,6 +232,7 @@ func TestRepository(t *testing.T) {
 		if got.Id != "eeeeeeee-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" ||
 			got.Timestamp != 0xeeeeeeee ||
 			got.Hash.String() != "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" ||
+			got.Depth != 2 ||
 			len(got.Tags) != 7 ||
 			got.Tags[0].Hash.String() != "0000000000000000000000000000000000000000000000000000000000000000" || got.Tags[0].Timestamp != 0x00000000 || got.Tags[0].Path != "0000/0000" ||
 			got.Tags[1].Hash.String() != "1111111111111111111111111111111111111111111111111111111111111111" || got.Tags[1].Timestamp != 0x11111111 || got.Tags[1].Path != "1111/1111" ||

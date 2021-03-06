@@ -95,28 +95,49 @@ func (repository Repository) WriteTags(commit Commit, base *Commit) error {
 	return errors.New("Repository's PathType must be PATH_FILE")
 }
 
-func (repository Repository) LoadTags(commitId string) (tags []Tag, err error) {
+func (repository Repository) LoadTags(commitId string) (tags []Tag, depth int, err error) {
+	return repository.loadTagsRecursive(commitId, 0)
+}
+
+func (repository Repository) loadTagsRecursive(commitId string, depth int) (tags []Tag, retDepth int, err error) {
 	var lines []string
 	if repository.PathType == PATH_FILE {
 		lines, err = fileOp.loadLines(repository.Path + "/.arciv/list/" + commitId)
 		if err != nil {
-			return []Tag{}, err
+			return []Tag{}, 0, err
 		}
 	} else {
-		return []Tag{}, errors.New("Repository's PathType must be PATH_FILE")
+		return []Tag{}, 0, errors.New("Repository's PathType must be PATH_FILE")
 	}
 
+	// #arciv-commit-atom
+	if strings.HasPrefix(lines[0], "#arciv-commit-atom") {
+		tags, err := loadTagsFromAtom(lines[1:])
+		return tags, depth, err
+	}
+	// backward compatible
+	if !strings.HasPrefix(lines[0], "#") {
+		tags, err := loadTagsFromAtom(lines)
+		return tags, depth, err
+	}
+	// #arciv-commit-extension
 	if strings.HasPrefix(lines[0], "#arciv-commit-extension from:") {
 		if len(lines[0]) < 29+73 {
-			return []Tag{}, errors.New("Length of the line '#arciv-commit-extension from:...' must be 102 or more")
+			return []Tag{}, 0, errors.New("Length of the line '#arciv-commit-extension from:...' must be 102 or more")
 		}
-		return repository.LoadTagsFromExtension(lines[0][len("#arciv-commit-extension from:"):], lines[1:])
+		commitIdFrom := lines[0][len("#arciv-commit-extension from:"):]
+		tags, retDepth, err := repository.loadTagsRecursive(commitIdFrom, depth)
+		if err != nil {
+			return []Tag{}, 0, err
+		}
+		tags, err = loadTagsFromExtension(tags, lines[1:])
+		return tags, retDepth + 1, err
 	}
-	if !strings.HasPrefix(lines[0], "#arciv-commit-atom") && strings.HasPrefix(lines[0], "#") {
-		return []Tag{}, errors.New("Unknow file type of a arciv tag list file")
-	}
+	return []Tag{}, 0, errors.New("Unknow file type of a arciv tag list file")
+}
 
-	for _, line := range lines[1:] {
+func loadTagsFromAtom(body []string) (tags []Tag, err error) {
+	for _, line := range body {
 		tag, err := str2Tag(line)
 		if err != nil {
 			return []Tag{}, err
@@ -126,11 +147,7 @@ func (repository Repository) LoadTags(commitId string) (tags []Tag, err error) {
 	return tags, nil
 }
 
-func (repository Repository) LoadTagsFromExtension(baseCommitId string, body []string) ([]Tag, error) {
-	tags, err := repository.LoadTags(baseCommitId)
-	if err != nil {
-		return []Tag{}, err
-	}
+func loadTagsFromExtension(tags []Tag, body []string) ([]Tag, error) {
 	for _, line := range body {
 		if len(line) < 75 || string(line[1]) != " " {
 			return []Tag{}, errors.New("Length of lines of a commit of extension tag list must be 75 or more")
@@ -154,10 +171,6 @@ func (repository Repository) LoadTagsFromExtension(baseCommitId string, body []s
 			return []Tag{}, errors.New("Lines of a commit of extension tag list must be started with '+' or '-'")
 		}
 	}
-	sort.Slice(tags, func(i, j int) bool {
-		return compareTag(tags[i], tags[j]) < 0
-	})
-
 	return tags, nil
 }
 
@@ -196,10 +209,13 @@ func (repository Repository) LoadCommit(commitId string) (Commit, error) {
 	if len(commitId) != 73 {
 		return Commit{}, errors.New("Length of a commit id must be 73.")
 	}
-	tags, err := repository.LoadTags(commitId)
+	tags, depth, err := repository.LoadTags(commitId)
 	if err != nil {
 		return Commit{}, err
 	}
+	sort.Slice(tags, func(i, j int) bool {
+		return compareTag(tags[i], tags[j]) < 0
+	})
 	timestamp, err := str2timestamp(commitId[:8])
 	if err != nil {
 		return Commit{}, err
@@ -208,7 +224,7 @@ func (repository Repository) LoadCommit(commitId string) (Commit, error) {
 	if err != nil {
 		return Commit{}, err
 	}
-	return Commit{Id: commitId, Timestamp: timestamp, Hash: hash, Tags: tags}, nil
+	return Commit{Id: commitId, Timestamp: timestamp, Hash: hash, Tags: tags, Depth: depth}, nil
 }
 
 func (repository Repository) FetchBlobHashes() ([]string, error) {
