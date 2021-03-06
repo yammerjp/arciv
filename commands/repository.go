@@ -8,6 +8,8 @@ import (
 
 type PathType int
 
+const COMMIT_EXTENSION_DEPTH_MAX = 9
+
 const (
 	PATH_FILE PathType = 0
 )
@@ -48,7 +50,9 @@ func (repository Repository) AddCommit(commit Commit) error {
 		if err != nil {
 			return err
 		}
-		baseCommit = &c
+		if c.Depth < COMMIT_EXTENSION_DEPTH_MAX {
+			baseCommit = &c
+		}
 	}
 	err = repository.WriteTags(commit, baseCommit)
 	if err != nil {
