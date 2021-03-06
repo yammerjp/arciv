@@ -69,7 +69,6 @@ func (repository Repository) LoadTimeline() ([]string, error) {
 		return fileOp.loadLines(repository.Path + "/.arciv/timeline")
 	}
 	return []string{}, errors.New("Repository's PathType must be PATH_FILE")
-
 }
 
 func (repository Repository) WriteTags(commit Commit, base *Commit) error {

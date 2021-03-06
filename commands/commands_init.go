@@ -32,31 +32,32 @@ func initAction() error {
 }
 
 func (repository Repository) Init() error {
-	if repository.PathType != PATH_FILE {
-		return errors.New("Repository's PathType must be PATH_FILE")
+	if repository.PathType == PATH_FILE {
+		// Create dirs if there does not exist
+		err := fileOp.mkdirAll(repository.Path + "/.arciv/list")
+		if err != nil {
+			return err
+		}
+		err = fileOp.mkdirAll(repository.Path + "/.arciv/blob")
+		if err != nil {
+			return err
+		}
+
+		// Create files if there does not exist
+		paths, err := fileOp.findFilePaths(repository.Path + "/.arciv")
+		if err != nil {
+			return err
+		}
+		if !isIncluded(paths, ".arciv/repositories") {
+			fileOp.writeLines(repository.Path+"/.arciv/repositories", []string{})
+		}
+		if !isIncluded(paths, ".arciv/timeline") {
+			fileOp.writeLines(repository.Path+"/.arciv/timeline", []string{})
+		}
+		return nil
 	}
 
-	err := os.MkdirAll(repository.Path+"/.arciv/list", 0777)
-	if err != nil {
-		return err
-	}
-	err = os.MkdirAll(repository.Path+"/.arciv/blob", 0777)
-	if err != nil {
-		return err
-	}
-
-	fR, err := os.Create(repository.Path + "/.arciv/repositories")
-	if err != nil {
-		return err
-	}
-	defer fR.Close()
-
-	fC, err := os.Create(repository.Path + "/.arciv/timeline")
-	if err != nil {
-		return err
-	}
-	defer fC.Close()
-	return nil
+	return errors.New("Repository's PathType must be PATH_FILE")
 }
 
 func init() {
