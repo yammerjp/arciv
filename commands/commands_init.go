@@ -48,10 +48,10 @@ func (repository Repository) Init() error {
 		if err != nil {
 			return err
 		}
-		if !isIncluded(paths, ".arciv/repositories") {
+		if !isIncluded(paths, "repositories") {
 			fileOp.writeLines(repository.Path+"/.arciv/repositories", []string{})
 		}
-		if !isIncluded(paths, ".arciv/timeline") {
+		if !isIncluded(paths, "timeline") {
 			fileOp.writeLines(repository.Path+"/.arciv/timeline", []string{})
 		}
 		return nil

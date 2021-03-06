@@ -29,7 +29,7 @@ func TestRepositoryInit(t *testing.T) {
 				if root != "root/.arciv" {
 					panic("fileOp.findFilePaths is called with a unknown argument " + root)
 				}
-				return []string{".arciv/blob/00000000-0000000000000000000000000000000000000000000000000000000000000000", ".arciv/blob/11111111-1111111111111111111111111111111111111111111111111111111111111111", ".arciv/repositories", ".arciv/timeline"}, nil
+				return []string{"blob/00000000-0000000000000000000000000000000000000000000000000000000000000000", "blob/11111111-1111111111111111111111111111111111111111111111111111111111111111", "repositories", "timeline"}, nil
 			},
 		}
 		err := repo.Init()
