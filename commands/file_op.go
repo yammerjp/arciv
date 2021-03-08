@@ -49,6 +49,8 @@ func messageStdin(str string) {
 	fmt.Println(str)
 }
 
+var rootDirMemo string
+
 type FileOp struct {
 	copyFile      func(from, to string) error
 	moveFile      func(from, to string) error
@@ -128,12 +130,16 @@ func init() {
 		},
 
 		rootDir: func() string {
+			if rootDirMemo != "" {
+				return rootDirMemo
+			}
 			// find arciv's root directory (exist .arciv)
 			// ex . current dir is /hoge/fuga/wara
 			// search /hoge/fuga/wara/.arciv , and next /hoge/fuga/.arciv , and next /hoge/.arciv , and next /.arciv
 			currentDir, _ := os.Getwd()
 			for dir := currentDir; strings.LastIndex(dir, "/") != -1; dir = dir[:strings.LastIndex(dir, "/")] {
 				if f, err := os.Stat(dir + "/.arciv"); !os.IsNotExist(err) && f.IsDir() {
+					rootDirMemo = dir
 					return dir
 				}
 			}
