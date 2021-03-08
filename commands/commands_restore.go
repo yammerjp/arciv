@@ -78,12 +78,9 @@ func restoreAction(repoName, commitAlias string) (err error) {
 		}
 		return nil
 	}
-	for _, tag := range blobsToReceive {
-		err = remoteRepo.ReceiveRemoteBlob(tag)
-		if err != nil {
-			return err
-		}
-		message("downloaded: " + tag.Hash.String() + ", will locate to: " + tag.Path)
+	err = remoteRepo.ReceiveRemoteBlobs(blobsToReceive)
+	if err != nil {
+		return err
 	}
 
 	// mv all local files to .arciv/blob

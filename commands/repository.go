@@ -239,21 +239,35 @@ func (repository Repository) FetchBlobHashes() ([]string, error) {
 }
 
 // send from repository's root directory
-func (repository Repository) SendLocalBlob(tag Tag) error {
+func (repository Repository) SendLocalBlobs(tags []Tag) (err error) {
 	if repository.PathType == PATH_FILE {
-		from := fileOp.rootDir() + "/" + tag.Path
-		to := repository.Path + "/.arciv/blob/" + tag.Hash.String()
-		return fileOp.copyFile(from, to)
+		for _, tag := range tags {
+			from := fileOp.rootDir() + "/" + tag.Path
+			to := repository.Path + "/.arciv/blob/" + tag.Hash.String()
+			err = fileOp.copyFile(from, to)
+			if err != nil {
+				return err
+			}
+			message("uploaded: " + tag.Hash.String() + ", " + tag.Path)
+		}
+		return nil
 	}
 	return errors.New("Repository's PathType must be PATH_FILE")
 }
 
 // receive to .arciv/blob
-func (repository Repository) ReceiveRemoteBlob(tag Tag) error {
+func (repository Repository) ReceiveRemoteBlobs(tags []Tag) (err error) {
 	if repository.PathType == PATH_FILE {
-		from := repository.Path + "/.arciv/blob/" + tag.Hash.String()
-		to := fileOp.rootDir() + "/.arciv/blob/" + tag.Hash.String()
-		return fileOp.copyFile(from, to)
+		for _, tag := range tags {
+			from := repository.Path + "/.arciv/blob/" + tag.Hash.String()
+			to := fileOp.rootDir() + "/.arciv/blob/" + tag.Hash.String()
+			err = fileOp.copyFile(from, to)
+			if err != nil {
+				return err
+			}
+			message("downloaded: " + tag.Hash.String() + ", will locate to: " + tag.Path)
+		}
+		return nil
 	}
 	return errors.New("Repository's PathType must be PATH_FILE")
 }

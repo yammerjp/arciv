@@ -331,39 +331,65 @@ func TestRepository(t *testing.T) {
 
 	// func (repository Repository) SendLocalBlob(tag Tag) error
 	// use fileOp.rootDir(), fileOp.copyFile()
-	t.Run("Repository.SendLocalBlob()", func(t *testing.T) {
+	t.Run("Repository.SendLocalBlobs()", func(t *testing.T) {
+		copied0 := false
+		copied1 := false
 		fileOp = &FileOp{
 			rootDir: func() string { return "local_root" },
 			copyFile: func(from, to string) error {
-				if from != "local_root/0000/0000" ||
-					to != "root/.arciv/blob/0000000000000000000000000000000000000000000000000000000000000000" {
-					t.Errorf("fileOp.copyFile is called with unknown arguments, (%s, %s)", from, to)
+				if from == "local_root/0000/0000" && to == "root/.arciv/blob/0000000000000000000000000000000000000000000000000000000000000000" {
+					copied0 = true
+					return nil
 				}
+				if from == "local_root/1111/1111" && to == "root/.arciv/blob/1111111111111111111111111111111111111111111111111111111111111111" {
+					copied1 = true
+					return nil
+				}
+				t.Errorf("fileOp.copyFile is called with unknown arguments, (%s, %s)", from, to)
 				return nil
 			},
 		}
-		err := repo.SendLocalBlob(Tag{Path: "0000/0000", Hash: hashing("0000000000000000000000000000000000000000000000000000000000000000")})
+		err := repo.SendLocalBlobs([]Tag{
+			Tag{Path: "0000/0000", Hash: hashing("0000000000000000000000000000000000000000000000000000000000000000")},
+			Tag{Path: "1111/1111", Hash: hashing("1111111111111111111111111111111111111111111111111111111111111111")},
+		})
 		if err != nil {
-			t.Errorf("Repository.SendLocalBlob() return an error \"%s\", want nil", err)
+			t.Errorf("Repository.SendLocalBlobs() return an error \"%s\", want nil", err)
+		}
+		if !copied0 || !copied1 {
+			t.Errorf("Repository.SendLocalBlobs() failed to copy files")
 		}
 	})
 
 	// func (repository Repository) ReceiveRemoteBlob(tag Tag) error
 	// use fileOp.rootDir(), fileOp.copyFile()
-	t.Run("Repository.ReceiveRemoteBlob()", func(t *testing.T) {
+	t.Run("Repository.ReceiveRemoteBlobs()", func(t *testing.T) {
+		copied0 := false
+		copied1 := false
 		fileOp = &FileOp{
 			rootDir: func() string { return "local_root" },
 			copyFile: func(from, to string) error {
-				if from != "root/.arciv/blob/0000000000000000000000000000000000000000000000000000000000000000" ||
-					to != "local_root/.arciv/blob/0000000000000000000000000000000000000000000000000000000000000000" {
-					t.Errorf("fileOp.copyFile is called with unknown arguments, (%s, %s)", from, to)
+				if from == "root/.arciv/blob/0000000000000000000000000000000000000000000000000000000000000000" && to == "local_root/.arciv/blob/0000000000000000000000000000000000000000000000000000000000000000" {
+					copied0 = true
+					return nil
 				}
+				if from == "root/.arciv/blob/1111111111111111111111111111111111111111111111111111111111111111" && to == "local_root/.arciv/blob/1111111111111111111111111111111111111111111111111111111111111111" {
+					copied1 = true
+					return nil
+				}
+				t.Errorf("fileOp.copyFile is called with unknown arguments, (%s, %s)", from, to)
 				return nil
 			},
 		}
-		err := repo.ReceiveRemoteBlob(Tag{Path: "0000/0000", Hash: hashing("0000000000000000000000000000000000000000000000000000000000000000")})
+		err := repo.ReceiveRemoteBlobs([]Tag{
+			Tag{Path: "0000/0000", Hash: hashing("0000000000000000000000000000000000000000000000000000000000000000")},
+			Tag{Path: "1111/1111", Hash: hashing("1111111111111111111111111111111111111111111111111111111111111111")},
+		})
 		if err != nil {
-			t.Errorf("Repository.ReceiveRemoteBlob() return an error \"%s\", want nil", err)
+			t.Errorf("Repository.ReceiveRemoteBlobs() return an error \"%s\", want nil", err)
+		}
+		if !copied0 || !copied1 {
+			t.Errorf("Repository.ReceiveRemoteBlobs() failed to copy files")
 		}
 	})
 
