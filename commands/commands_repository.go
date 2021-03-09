@@ -107,15 +107,13 @@ func repositoryActionRemove(name string) error {
 }
 
 func createRepoStruct(name string, url string) (Repository, error) {
-	var path string
-	var pathType PathType
 	if strings.HasPrefix(url, "file://") {
-		path = url[len("file://"):]
-		pathType = PATH_FILE
-	} else {
-		return Repository{}, errors.New("Repository path must be file:///...")
+		return Repository{Name: name, Path: url[len("file://"):], PathType: PATH_FILE}, nil
 	}
-	return Repository{Name: name, Path: path, PathType: pathType}, nil
+	if strings.HasPrefix(url, "s3://") {
+		return Repository{Name: name, Path: url[len("s3://"):], PathType: PATH_S3}, nil
+	}
+	return Repository{}, errors.New("Repository path must be file:// or s3:// ...")
 }
 
 func loadRepos() ([]Repository, error) {

@@ -11,7 +11,8 @@ type PathType int
 const COMMIT_EXTENSION_DEPTH_MAX = 9
 
 const (
-	PATH_FILE PathType = 0
+	PATH_FILE PathType = 1
+	PATH_S3   PathType = 2
 )
 
 type Repository struct {
@@ -21,10 +22,13 @@ type Repository struct {
 }
 
 func (repository Repository) String() string {
+
 	if repository.PathType == PATH_FILE {
 		return repository.Name + " file://" + repository.Path
+	} else if repository.PathType == PATH_S3 {
+		return repository.Name + " s3://" + repository.Path
 	}
-	Exit(errors.New("PathType Must Be PATH_FILE"), 1)
+	Exit(errors.New("A repository with unknown PathType is not able to be stringified"), 1)
 	return ""
 }
 

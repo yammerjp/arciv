@@ -8,8 +8,8 @@ func TestCommandsRepository(t *testing.T) {
 	// func createRepoStruct(name string, url string) (Repository, error)
 	t.Run("createRepoStruct()", func(t *testing.T) {
 		repo, err := createRepoStruct("repo-name", "file:/invalid-path")
-		if err.Error() != "Repository path must be file:///..." {
-			t.Errorf("createRepoStruct() return an error \"%s\", want \"Repository path must be file:///...\"", err)
+		if err.Error() != "Repository path must be file:// or s3:// ..." {
+			t.Errorf("createRepoStruct() return an error \"%s\", want \"Repository path must be file:// of s3:// ...\"", err)
 		}
 		repo, err = createRepoStruct("repo-name", "file://relative-path")
 		if err != nil {
@@ -161,8 +161,8 @@ func TestCommandsRepository(t *testing.T) {
 		}
 		// bad case, repository path is invalid
 		err = repositoryActionAdd("repo-new", "invalid-path")
-		if err.Error() != "Repository path must be file:///..." {
-			t.Errorf("repositoryActionAdd(\"repo-new\", \"invalid-path\") return an error \"%s\", want \"Repository path must be file:///...\"", err)
+		if err.Error() != "Repository path must be file:// or s3:// ..." {
+			t.Errorf("repositoryActionAdd(\"repo-new\", \"invalid-path\") return an error \"%s\", want \"Repository path must be file:// of s3:// ...\"", err)
 		}
 
 		// success case

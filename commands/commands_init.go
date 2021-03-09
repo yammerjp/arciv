@@ -56,6 +56,10 @@ func (repository Repository) Init() error {
 		}
 		return nil
 	}
+	if repository.PathType == PATH_S3 {
+		// TODO: Check to connect to bucket
+		return nil
+	}
 
 	return errors.New("Repository's PathType must be PATH_FILE")
 }
