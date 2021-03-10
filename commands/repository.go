@@ -69,14 +69,24 @@ func (repository Repository) WriteTimeline(timeline []string) error {
 	if repository.PathType == PATH_FILE {
 		return fileOp.writeLines(repository.Path+"/.arciv/timeline", timeline)
 	}
-	return errors.New("Repository's PathType must be PATH_FILE")
+	if repository.PathType == PATH_S3 {
+		bucketName = repository.Path
+		prepareS3BucketClient()
+		return s3Op.writeLines(".arciv/timeline", timeline)
+	}
+	return errors.New("Repository's PathType must be PATH_FILE or PATH_S3")
 }
 
 func (repository Repository) LoadTimeline() ([]string, error) {
 	if repository.PathType == PATH_FILE {
 		return fileOp.loadLines(repository.Path + "/.arciv/timeline")
 	}
-	return []string{}, errors.New("Repository's PathType must be PATH_FILE")
+	if repository.PathType == PATH_S3 {
+		bucketName = repository.Path
+		prepareS3BucketClient()
+		return s3Op.loadLines(".arciv/timeline")
+	}
+	return []string{}, errors.New("Repository's PathType must be PATH_FILE or PATH_S3")
 }
 
 func (repository Repository) WriteTags(commit Commit, base *Commit) error {
@@ -100,7 +110,12 @@ func (repository Repository) WriteTags(commit Commit, base *Commit) error {
 	if repository.PathType == PATH_FILE {
 		return fileOp.writeLines(repository.Path+"/.arciv/list/"+commit.Id, lines)
 	}
-	return errors.New("Repository's PathType must be PATH_FILE")
+	if repository.PathType == PATH_S3 {
+		bucketName = repository.Path
+		prepareS3BucketClient()
+		return s3Op.writeLines(".arciv/list/"+commit.Id, lines)
+	}
+	return errors.New("Repository's PathType must be PATH_FILE or PATH_S3")
 }
 
 func (repository Repository) LoadTags(commitId string) (tags []Tag, depth int, err error) {
@@ -114,8 +129,15 @@ func (repository Repository) loadTagsRecursive(commitId string, depth int) (tags
 		if err != nil {
 			return []Tag{}, 0, err
 		}
+	} else if repository.PathType == PATH_S3 {
+		bucketName = repository.Path
+		prepareS3BucketClient()
+		lines, err = s3Op.loadLines(".arciv/list/" + commitId)
+		if err != nil {
+			return []Tag{}, 0, err
+		}
 	} else {
-		return []Tag{}, 0, errors.New("Repository's PathType must be PATH_FILE")
+		return []Tag{}, 0, errors.New("Repository's PathType must be PATH_FILE or PATH_S3")
 	}
 
 	// #arciv-commit-atom
@@ -239,7 +261,12 @@ func (repository Repository) FetchBlobHashes() ([]string, error) {
 	if repository.PathType == PATH_FILE {
 		return fileOp.findFilePaths(repository.Path + "/.arciv/blob")
 	}
-	return []string{}, errors.New("Repository's PathType must be PATH_FILE")
+	if repository.PathType == PATH_S3 {
+		bucketName = repository.Path
+		prepareS3BucketClient()
+		return s3Op.listBlobs()
+	}
+	return []string{}, errors.New("Repository's PathType must be PATH_FILE or PATH_S3")
 }
 
 // send from repository's root directory
@@ -256,7 +283,18 @@ func (repository Repository) SendLocalBlobs(tags []Tag) (err error) {
 		}
 		return nil
 	}
-	return errors.New("Repository's PathType must be PATH_FILE")
+	if repository.PathType == PATH_S3 {
+		var fromPaths []string
+		var blobNames []string
+		for _, tag := range tags {
+			fromPaths = append(fromPaths, fileOp.rootDir()+"/"+tag.Path)
+			blobNames = append(blobNames, tag.Hash.String())
+		}
+		bucketName = repository.Path
+		prepareS3BucketClient()
+		return s3Op.sendBlobs(fromPaths, blobNames)
+	}
+	return errors.New("Repository's PathType must be PATH_FILE or PATH_S3")
 }
 
 // receive to .arciv/blob
@@ -273,7 +311,22 @@ func (repository Repository) ReceiveRemoteBlobs(tags []Tag) (err error) {
 		}
 		return nil
 	}
-	return errors.New("Repository's PathType must be PATH_FILE")
+	if repository.PathType == PATH_S3 {
+		// FIXME: receive restored files from deep archive
+		return errors.New("Download blobs from AWS S3 is not implemented yet...\n Please download from Web console and place the files into .arciv/blob/")
+		/*
+			var toPaths []string
+			var blobNames []string
+			for _, tag := range tags {
+				toPaths = append(toPaths, repository.Path+"/.arciv/blob/"+tag.Hash.String())
+				blobNames = append(blobNames, tag.Hash.String())
+			}
+			bucketName = repository.Path
+			prepareS3BucketClient()
+			return s3Op.receiveBlobs(toPaths, blobNames)
+		*/
+	}
+	return errors.New("Repository's PathType must be PATH_FILE or PATH_S3")
 }
 
 func findCommitId(alias string, commitIds []string) (foundCId string, err error) {

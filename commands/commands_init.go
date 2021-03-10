@@ -57,11 +57,26 @@ func (repository Repository) Init() error {
 		return nil
 	}
 	if repository.PathType == PATH_S3 {
-		// TODO: Check to connect to bucket
+		bucketName = repository.Path
+		prepareS3BucketClient()
+		// FIXME: add a func, s3Op.Exist("  key string  ")
+		_, err := s3Op.loadLines(".arciv/repositories")
+		if err != nil {
+			err = s3Op.writeLines(".arciv/repositories", []string{})
+			if err != nil {
+				return err
+			}
+		}
+		_, err = s3Op.loadLines(".arciv/timeline")
+		if err != nil {
+			err = s3Op.writeLines(".arciv/timeline", []string{})
+			if err != nil {
+				return err
+			}
+		}
 		return nil
 	}
-
-	return errors.New("Repository's PathType must be PATH_FILE")
+	return errors.New("Repository's PathType must be PATH_FILE or PATH_S3")
 }
 
 func init() {
