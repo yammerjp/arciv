@@ -23,10 +23,9 @@ func s3lowaccessCommand(cmd *cobra.Command, args []string) {
 }
 
 func s3lowaccessAction(args []string) error {
-	bucketName = "arciv-development-backet"
 	if len(args) == 1 && args[0] == "list-blob" {
 		// arciv s3lowaccess list-blob
-		prepareS3BucketClient()
+		prepareS3BucketClient("arciv-development-backet", "ap-northeast-1")
 		blobNames, err := s3Op.listBlobs()
 		if err != nil {
 			return err
@@ -38,7 +37,7 @@ func s3lowaccessAction(args []string) error {
 	}
 	if len(args) == 2 && args[0] == "load" {
 		// arciv s3lowaccess load <key>
-		prepareS3BucketClient()
+		prepareS3BucketClient("arciv-development-backet", "ap-northeast-1")
 		lines, err := s3Op.loadLines(args[1])
 		if err != nil {
 			return err
@@ -50,12 +49,12 @@ func s3lowaccessAction(args []string) error {
 	}
 	if len(args) == 3 && args[0] == "download" {
 		// arciv s3lowaccess download <key> <write-path>
-		prepareS3BucketClient()
+		prepareS3BucketClient("arciv-development-backet", "ap-northeast-1")
 		return s3Op.receiveBlobs([]string{args[2]}, []string{args[1]})
 	}
 	if len(args) == 3 && args[0] == "upload" {
 		// arciv s3lowaccess upload <key> <read-path>
-		prepareS3BucketClient()
+		prepareS3BucketClient("arciv-development-backet", "ap-northeast-1")
 		return s3Op.sendBlobs([]string{args[2]}, []string{args[1]})
 	}
 	if len(args) == 2 && args[0] == "write" {
@@ -65,7 +64,7 @@ func s3lowaccessAction(args []string) error {
 		for stdin.Scan() {
 			lines = append(lines, stdin.Text())
 		}
-		prepareS3BucketClient()
+		prepareS3BucketClient("arciv-development-backet", "ap-northeast-1")
 		return s3Op.writeLines(args[1], lines)
 	}
 	fmt.Println("Usage:")

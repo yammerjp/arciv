@@ -14,16 +14,12 @@ func (repositoryLocationS3 RepositoryLocationS3) String() string {
 }
 
 func (repositoryLocationS3 RepositoryLocationS3) writeLines(relativePath string, lines []string) error {
-	bucketName = repositoryLocationS3.BucketName
-	regionName = repositoryLocationS3.RegionName
-	prepareS3BucketClient()
+	repositoryLocationS3.prepareClient()
 	return s3Op.writeLines(relativePath, lines)
 }
 
 func (repositoryLocationS3 RepositoryLocationS3) loadLines(relativePath string) (lines []string, err error) {
-	bucketName = repositoryLocationS3.BucketName
-	regionName = repositoryLocationS3.RegionName
-	prepareS3BucketClient()
+	repositoryLocationS3.prepareClient()
 	return s3Op.loadLines(relativePath)
 }
 
@@ -31,9 +27,7 @@ func (repositoryLocationS3 RepositoryLocationS3) findFilePaths(root string) (rel
 	if root != ".arciv/blob" {
 		panic("findFilePaths() out of '.arciv/blob/ is not implemented")
 	}
-	bucketName = repositoryLocationS3.BucketName
-	regionName = repositoryLocationS3.RegionName
-	prepareS3BucketClient()
+	repositoryLocationS3.prepareClient()
 	return s3Op.listBlobs()
 }
 
@@ -44,9 +38,7 @@ func (repositoryLocationS3 RepositoryLocationS3) SendLocalBlobs(tags []Tag) (err
 		fromPaths = append(fromPaths, fileOp.rootDir()+"/"+tag.Path)
 		blobNames = append(blobNames, tag.Hash.String())
 	}
-	bucketName = repositoryLocationS3.BucketName
-	regionName = repositoryLocationS3.RegionName
-	prepareS3BucketClient()
+	repositoryLocationS3.prepareClient()
 	return s3Op.sendBlobs(fromPaths, blobNames)
 }
 
@@ -60,9 +52,11 @@ func (repositoryLocationS3 RepositoryLocationS3) ReceiveRemoteBlobs(tags []Tag) 
 			toPaths = append(toPaths, repository.Path+"/.arciv/blob/"+tag.Hash.String())
 			blobNames = append(blobNames, tag.Hash.String())
 		}
-		bucketName = repositoryLocationS3.BucketName
-		regionName = repositoryLocationS3.RegionName
-		prepareS3BucketClient()
+		repositoryLocationS3.prepareClient()
 		return s3Op.receiveBlobs(toPaths, blobNames)
 	*/
+}
+
+func (repositoryLocationS3 RepositoryLocationS3) prepareClient() {
+	prepareS3BucketClient(repositoryLocationS3.BucketName, repositoryLocationS3.RegionName)
 }

@@ -59,9 +59,7 @@ func (repositoryLocationFile RepositoryLocationFile) Init() error {
 }
 
 func (repositoryLocationS3 RepositoryLocationS3) Init() error {
-	bucketName = repositoryLocationS3.BucketName
-	regionName = repositoryLocationS3.RegionName
-	prepareS3BucketClient()
+	repositoryLocationS3.prepareClient()
 	// FIXME: add a func, s3Op.Exist("  key string  ")
 	_, err := s3Op.loadLines(".arciv/repositories")
 	if err != nil {

@@ -28,23 +28,15 @@ var s3Op *S3Op
 type S3BucketClient struct {
 	S3client   *s3.Client
 	BucketName string
+	RegionName string
 }
 
-var regionName = "ap-northeast-1"
-var bucketName string
 var s3BucketClient *S3BucketClient
 
-func prepareS3BucketClient() {
-	if s3BucketClient != nil {
+func prepareS3BucketClient(bucketName, regionName string) {
+	if s3BucketClient != nil && s3BucketClient.BucketName == bucketName && s3BucketClient.RegionName == regionName {
 		return
 	}
-	if regionName == "" {
-		panic("regionName is not specified")
-	}
-	if bucketName == "" {
-		panic("bucketName is not specified")
-	}
-
 	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(regionName))
 	if err != nil {
 		panic(err)
@@ -179,10 +171,6 @@ func init() {
 			if s3BucketClient == nil {
 				return []string{}, errors.New("S3BucketClient is not prepared")
 			}
-
-			bucketName = "arciv-development-backet"
-			prepareS3BucketClient()
-
 			keys, err := s3BucketClient.list()
 			if err != nil {
 				return []string{}, err
