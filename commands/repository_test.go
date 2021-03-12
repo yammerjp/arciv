@@ -5,7 +5,7 @@ import (
 )
 
 func TestRepository(t *testing.T) {
-	repo := Repository{Name: "repo_name", Path: "root", PathType: PATH_FILE}
+	repo := Repository{Name: "repo_name", Location: RepositoryLocationFile{Path: "root"}}
 
 	// func (repository Repository) String() string
 	t.Run("Repository.String()", func(t *testing.T) {

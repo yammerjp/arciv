@@ -5,7 +5,7 @@ import (
 )
 
 func TestRepositoryInit(t *testing.T) {
-	repo := Repository{Name: "repo-name", Path: "root", PathType: PATH_FILE}
+	repo := Repository{Name: "repo-name", Location: RepositoryLocationFile{Path: "root"}}
 	mkdirAll := func(path string) error {
 		switch path {
 		case "root/.arciv/blob":

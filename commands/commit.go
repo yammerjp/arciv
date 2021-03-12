@@ -25,14 +25,14 @@ func init() {
 
 func createCommitStructure() (Commit, error) {
 	// Tags
-	selfRepo := SelfRepo()
-	paths, err := fileOp.findFilePaths(selfRepo.Path)
+	root := fileOp.rootDir()
+	paths, err := fileOp.findFilePaths(root)
 	if err != nil {
 		return Commit{}, err
 	}
 	var tags []Tag
 	for _, path := range paths {
-		tag, err := tagging(selfRepo.Path, path)
+		tag, err := tagging(root, path)
 		if err != nil {
 			return Commit{}, err
 		}

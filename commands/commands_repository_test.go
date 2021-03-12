@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"fmt"
+	"os"
 	"testing"
 )
 
@@ -16,9 +18,8 @@ func TestCommandsRepository(t *testing.T) {
 			t.Errorf("createRepoStruct() return an error \"%s\", want nil", err)
 		}
 		if repo.Name != "repo-name" ||
-			repo.Path != "relative-path" ||
-			repo.PathType != PATH_FILE {
-			t.Errorf("createRepoStruct() = %s, want {Name: \"repo-name\", Path: \"relative-path\", PathType: PATH_FILE,}", repo)
+			repo.Location.String() != "file://relative-path" {
+			t.Errorf("createRepoStruct() = %s, want {Name: \"repo-name\", Location: file://relative-path", repo)
 		}
 	})
 
@@ -36,16 +37,19 @@ func TestCommandsRepository(t *testing.T) {
 				if len(lines) != 3 ||
 					lines[0] != "repo-relative file://path-relative" ||
 					lines[1] != "repo-absolute file:///path-absolute" ||
-					lines[2] != "repo-new file://path-new" {
+					lines[2] != "repo-new file://repo-new" {
 					t.Errorf("fileOp.writeLines is called with unknown lines %s", lines)
+					for i, line := range lines {
+						fmt.Fprintf(os.Stderr, "    lines[%d] : \"%s\"\n", i, line)
+					}
 				}
 				return nil
 			},
 		}
 		err := writeRepos([]Repository{
-			Repository{Name: "repo-relative", Path: "path-relative", PathType: PATH_FILE},
-			Repository{Name: "repo-absolute", Path: "/path-absolute", PathType: PATH_FILE},
-			Repository{Name: "repo-new", Path: "path-new", PathType: PATH_FILE},
+			Repository{Name: "repo-relative", Location: RepositoryLocationFile{Path: "path-relative"}},
+			Repository{Name: "repo-absolute", Location: RepositoryLocationFile{Path: "/path-absolute"}},
+			Repository{Name: "repo-new", Location: RepositoryLocationFile{Path: "repo-new"}},
 		})
 		if err != nil {
 			t.Errorf("writeRepos() return an error \"%s\", want nil", err)
@@ -78,9 +82,9 @@ func TestCommandsRepository(t *testing.T) {
 			t.Errorf("loadRepos() return an error \"%s\", want nil", err)
 		}
 		if len(repos) != 3 ||
-			repos[0].Name != "self" || repos[0].Path != "root" || repos[0].PathType != PATH_FILE ||
-			repos[1].Name != "repo-relative" || repos[1].Path != "path-relative" || repos[1].PathType != PATH_FILE ||
-			repos[2].Name != "repo-absolute" || repos[2].Path != "/path-absolute" || repos[2].PathType != PATH_FILE {
+			repos[0].Name != "self" || repos[0].Location.String() != "file://root" ||
+			repos[1].Name != "repo-relative" || repos[1].Location.String() != "file://path-relative" ||
+			repos[2].Name != "repo-absolute" || repos[2].Location.String() != "file:///path-absolute" {
 			t.Errorf("loadRepos() = %s", repos)
 		}
 	})
@@ -96,16 +100,16 @@ func TestCommandsRepository(t *testing.T) {
 		if err != nil {
 			t.Errorf("findRepo(\"self\") return an error \"%s\", want nil", err)
 		}
-		if repo.Name != "self" || repo.Path != "root" || repo.PathType != PATH_FILE {
-			t.Errorf("findRepo(\"self\") %s, want Repository{Name: \"self\", Path: \"root\", PathType: PATH_TYPE,}", repo)
+		if repo.Name != "self" || repo.Location.String() != "file://root" {
+			t.Errorf("findRepo(\"self\") %s, want Repository{Name: \"self\", Location: file://root", repo)
 		}
 
 		repo, err = findRepo("repo-relative")
 		if err != nil {
 			t.Errorf("findRepo(\"repo-relative\") return an error \"%s\", want nil", err)
 		}
-		if repo.Name != "repo-relative" || repo.Path != "path-relative" || repo.PathType != PATH_FILE {
-			t.Errorf("findRepo(\"repo-relative\") %s, want Repository{Name: \"repo-relative\", Path: \"path-relative\", PathType: PATH_TYPE,}", repo)
+		if repo.Name != "repo-relative" || repo.Location.String() != "file://path-relative" {
+			t.Errorf("findRepo(\"repo-relative\") %s, want Repository{Name: \"repo-relative\", Location: file://path-relative", repo)
 		}
 
 		repo, err = findRepo("repo-relativ")

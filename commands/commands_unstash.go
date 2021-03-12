@@ -35,7 +35,7 @@ func unstashAction() (err error) {
 }
 
 func unstashTags(tags []Tag) (err error) {
-	selfRepo := SelfRepo()
+	root := fileOp.rootDir()
 	// mkdir
 	dirSet := make(map[string]struct{})
 	for _, tag := range tags {
@@ -50,8 +50,8 @@ func unstashTags(tags []Tag) (err error) {
 
 	// copy or move
 	for i, tag := range tags {
-		from := selfRepo.Path + "/.arciv/blob/" + tag.Hash.String()
-		to := selfRepo.Path + "/" + tag.Path
+		from := root + "/.arciv/blob/" + tag.Hash.String()
+		to := root + "/" + tag.Path
 
 		// If different files point to a same blob,
 		//  the blob is copied on the first (, second, and ...) time,
