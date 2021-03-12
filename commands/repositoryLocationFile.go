@@ -4,8 +4,8 @@ type RepositoryLocationFile struct {
 	Path string
 }
 
-func (repositoryLocationFile RepositoryLocationFile) String() string {
-	return "file://" + repositoryLocationFile.Path
+func (r RepositoryLocationFile) String() string {
+	return "type:file path:" + r.Path
 }
 
 func (repositoryLocationFile RepositoryLocationFile) writeLines(relativePath string, lines []string) error {

@@ -24,7 +24,7 @@ type RepositoryLocation interface {
 }
 
 func (repository Repository) String() string {
-	return repository.Name + " " + repository.Location.String()
+	return "name:" + repository.Name + " " + repository.Location.String()
 }
 
 func (repository Repository) AddCommit(commit Commit) error {

@@ -10,7 +10,7 @@ type RepositoryLocationS3 struct {
 }
 
 func (r RepositoryLocationS3) String() string {
-	return "s3://" + r.BucketName
+	return "type:s3 region:" + r.RegionName + " bucket:" + r.BucketName
 }
 
 func (r RepositoryLocationS3) writeLines(relativePath string, lines []string) error {

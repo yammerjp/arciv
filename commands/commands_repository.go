@@ -17,12 +17,13 @@ On excite 'arciv repository add', the command registers a new repository to the 
 On excute 'arciv repository remove', the command removes a already registerd repository from the current repository.
 
 Example:
-        arciv repository add media-stable file:///media/hdd0/arciv-repo-directory
+        arciv repository add name:media-stable type:file path:/media/hdd0/arciv-repo-directory
           ... register the new repository, 'mesia-stable' and its root directory is /media/hdd0/arciv-repo-directory
+        arciv repository add name:aws-s3-repo type:s3 bucket:s3-bucket-name-hoge region:ap-northeast-1
+          ... register the new repository, 'aws-s3-repo' on AWS S3 (ap-northeast-1), s3://s3-bucket-name-hoge
         arciv repository remove media-stable
           ... remove the repository, 'media-stable'
 `,
-		Args: cobra.RangeArgs(0, 3),
 	}
 )
 
@@ -40,8 +41,8 @@ func repositoryAction(args []string) (err error) {
 	if len(args) == 0 {
 		return repositoryActionShow()
 	}
-	if len(args) == 3 && args[0] == "add" {
-		return repositoryActionAdd(args[1], args[2])
+	if args[0] == "add" {
+		return repositoryActionAdd(args[1:])
 	}
 	if len(args) == 2 && args[0] == "remove" {
 		return repositoryActionRemove(args[1])
@@ -63,22 +64,25 @@ func repositoryActionShow() error {
 	return nil
 }
 
-func repositoryActionAdd(name string, url string) error {
-	if strings.Index(name, " ") != -1 {
-		return errors.New("Repository name must not include space")
+func repositoryActionAdd(args []string) error {
+	for _, elm := range args {
+		if strings.Contains(elm, " ") {
+			return errors.New("Including space in repository definition is not supported")
+		}
 	}
+	repo, err := strs2repository(args)
+	if err != nil {
+		return err
+	}
+
 	repos, err := loadRepos()
 	if err != nil {
 		return err
 	}
 	for _, r := range repos {
-		if r.Name == name {
+		if r.Name == repo.Name {
 			return errors.New("The repository name already exists")
 		}
-	}
-	repo, err := createRepoStruct(name, url)
-	if err != nil {
-		return err
 	}
 	err = repo.Init()
 	if err != nil {
@@ -106,14 +110,65 @@ func repositoryActionRemove(name string) error {
 	return errors.New("The repository is not found")
 }
 
-func createRepoStruct(name string, url string) (Repository, error) {
-	if strings.HasPrefix(url, "file://") {
-		return Repository{Name: name, Location: RepositoryLocationFile{Path: url[len("file://"):]}}, nil
+func strs2repository(elements []string) (Repository, error) {
+	var rtype string
+	var name string
+	var path string
+	var region string
+	var bucket string
+	if len(elements) == 0 {
+		return Repository{}, nil
 	}
-	if strings.HasPrefix(url, "s3://") {
-		return Repository{Name: name, Location: RepositoryLocationS3{BucketName: url[len("s3://"):], RegionName: "ap-northeast-1"}}, nil
+	for _, elm := range elements {
+		if elm == "" {
+			continue
+		}
+		if strings.HasPrefix(elm, "type:") {
+			if rtype != "" {
+				return Repository{}, errors.New("Specifications of repository information is duplicated")
+			}
+			rtype = elm[len("type:"):]
+		} else if strings.HasPrefix(elm, "name:") {
+			if name != "" {
+				return Repository{}, errors.New("Specifications of repository information is duplicated")
+			}
+			name = elm[len("name:"):]
+		} else if strings.HasPrefix(elm, "path") {
+			if path != "" {
+				return Repository{}, errors.New("Specifications of repository information is duplicated")
+			}
+			path = elm[len("path:"):]
+		} else if strings.HasPrefix(elm, "region:") {
+			if region != "" {
+				return Repository{}, errors.New("Specifications of repository information is duplicated")
+			}
+			region = elm[len("region:"):]
+		} else if strings.HasPrefix(elm, "bucket:") {
+			if bucket != "" {
+				return Repository{}, errors.New("Specifications of repository information is duplicated")
+			}
+			bucket = elm[len("bucket:"):]
+		} else {
+			message(elm)
+			return Repository{}, errors.New("Repository definition is invalid syntax")
+		}
 	}
-	return Repository{}, errors.New("Repository path must be file:// or s3:// ...")
+	if name == "" {
+		return Repository{}, errors.New("Repository's name is not specified")
+	}
+	if rtype == "file" {
+		if path == "" {
+			return Repository{}, errors.New("Repository's type is file, but path is not specified")
+		}
+		return Repository{Name: name, Location: RepositoryLocationFile{Path: path}}, nil
+	}
+	if rtype == "s3" {
+		if bucket == "" || region == "" {
+			return Repository{}, errors.New("Repository's type is file, but bucket or region is not specified")
+		}
+		return Repository{Name: name, Location: RepositoryLocationS3{RegionName: region, BucketName: bucket}}, nil
+	}
+	return Repository{}, errors.New("Unknown repository's type")
 }
 
 func loadRepos() ([]Repository, error) {
@@ -123,21 +178,14 @@ func loadRepos() ([]Repository, error) {
 	}
 	repos := []Repository{SelfRepo()}
 	for _, line := range lines {
-		idx := strings.Index(line, " ")
-		if idx == -1 {
-			return []Repository{}, errors.New("Repository path is not registerd in .arciv/repositories")
-		}
-		name := line[:idx]
-		url := line[idx+1:]
-
-		for _, r := range repos {
-			if r.Name == name {
-				return []Repository{}, errors.New("Repositoy name is conflict in .arciv/repositories")
-			}
-		}
-		repo, err := createRepoStruct(name, url)
+		repo, err := strs2repository(strings.Split(line, " "))
 		if err != nil {
 			return []Repository{}, err
+		}
+		for _, r := range repos {
+			if r.Name == repo.Name {
+				return []Repository{}, errors.New("Repositoy name is conflict in .arciv/repositories")
+			}
 		}
 		repos = append(repos, repo)
 	}

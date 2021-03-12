@@ -32,7 +32,7 @@ find "${local_repo_dir}" -type f -print0 | xargs -0 sha256sum > "${testing_tmp_d
 # Initialize a local repository
 ${arciv_bin} init
 
-${arciv_bin} repository add remote-repo "file://${remote_repo_dir}"
+${arciv_bin} repository add "name:remote-repo" "path:${remote_repo_dir}" "type:file"
 
 # Store blobs to a remote repository
 ${arciv_bin} store remote-repo
