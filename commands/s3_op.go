@@ -49,11 +49,12 @@ func client(region, bucket string) *S3BucketClient {
 	return s3BucketClient
 }
 
-func (bucketClient S3BucketClient) list() (keys []string, err error) {
+func (bucketClient S3BucketClient) list(prefix *string) (keys []string, err error) {
 	p := s3.NewListObjectsV2Paginator(
 		bucketClient.S3client,
 		&s3.ListObjectsV2Input{
 			Bucket: &bucketClient.BucketName,
+			Prefix: prefix,
 		},
 	)
 
@@ -170,14 +171,16 @@ func (bucketClient S3BucketClient) restoreRequest(key string, restoreKeyRequest 
 func init() {
 	s3Op = &S3Op{
 		findFilePaths: func(region string, bucket string, root string) (relativePaths []string, err error) {
-			keys, err := client(region, bucket).list()
+			if len(root) == 0 {
+				return client(region, bucket).list(nil)
+			}
+			prefix := root + "/"
+			keys, err := client(region, bucket).list(&prefix)
 			if err != nil {
 				return []string{}, err
 			}
 			for _, key := range keys {
-				if strings.HasPrefix(key, root+"/") {
-					relativePaths = append(relativePaths, key[len(root)+1:])
-				}
+				relativePaths = append(relativePaths, key[len(root)+1:])
 			}
 			return relativePaths, nil
 		},
