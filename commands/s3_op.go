@@ -15,7 +15,7 @@ import (
 )
 
 type S3Op struct {
-	listBlobs    func() ([]string, error)
+	findFilePaths func(root string) (relativePaths []string, err error)
 	writeLines   func(path string, lines []string) error
 	loadLines    func(path string) ([]string, error)
 	sendBlobs    func(paths, names []string) error
@@ -167,7 +167,7 @@ func (bucketClient S3BucketClient) restoreRequest(key string, restoreKeyRequest 
 
 func init() {
 	s3Op = &S3Op{
-		listBlobs: func() (blobNames []string, err error) {
+		findFilePaths: func(root string) (relativePaths []string, err error) {
 			if s3BucketClient == nil {
 				return []string{}, errors.New("S3BucketClient is not prepared")
 			}
@@ -176,11 +176,11 @@ func init() {
 				return []string{}, err
 			}
 			for _, key := range keys {
-				if strings.HasPrefix(key, ".arciv/blob/") {
-					blobNames = append(blobNames, key[len(".arciv/blob/"):])
+				if strings.HasPrefix(key, root + "/") {
+					relativePaths = append(relativePaths, key[len(root)+1:])
 				}
 			}
-			return blobNames, nil
+			return relativePaths, nil
 		},
 		writeLines: func(path string, lines []string) error {
 			if s3BucketClient == nil {

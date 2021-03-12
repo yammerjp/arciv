@@ -24,11 +24,8 @@ func (repositoryLocationS3 RepositoryLocationS3) loadLines(relativePath string) 
 }
 
 func (repositoryLocationS3 RepositoryLocationS3) findFilePaths(root string) (relativePaths []string, err error) {
-	if root != ".arciv/blob" {
-		panic("findFilePaths() out of '.arciv/blob/ is not implemented")
-	}
 	repositoryLocationS3.prepareClient()
-	return s3Op.listBlobs()
+	return s3Op.findFilePaths(root)
 }
 
 func (repositoryLocationS3 RepositoryLocationS3) SendLocalBlobs(tags []Tag) (err error) {

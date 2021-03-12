@@ -26,7 +26,7 @@ func s3lowaccessAction(args []string) error {
 	if len(args) == 1 && args[0] == "list-blob" {
 		// arciv s3lowaccess list-blob
 		prepareS3BucketClient("arciv-development-backet", "ap-northeast-1")
-		blobNames, err := s3Op.listBlobs()
+		blobNames, err := s3Op.findFilePaths(".arciv/blob")
 		if err != nil {
 			return err
 		}
