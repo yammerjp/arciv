@@ -149,7 +149,6 @@ func strs2repository(elements []string) (Repository, error) {
 			}
 			bucket = elm[len("bucket:"):]
 		} else {
-			message(elm)
 			return Repository{}, errors.New("Repository definition is invalid syntax")
 		}
 	}

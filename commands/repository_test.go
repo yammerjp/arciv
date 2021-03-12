@@ -10,8 +10,8 @@ func TestRepository(t *testing.T) {
 	// func (repository Repository) String() string
 	t.Run("Repository.String()", func(t *testing.T) {
 		got := repo.String()
-		if got != "repo_name file://root" {
-			t.Errorf("Repository.String() = %s, want \"repo_name file://root\"", got)
+		if got != "name:repo_name type:file path:root" {
+			t.Errorf("Repository.String() = %s, want \"name:repo_name type:file path:root\"", got)
 		}
 	})
 

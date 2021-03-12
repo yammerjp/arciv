@@ -7,21 +7,9 @@ import (
 )
 
 func TestCommandsRepository(t *testing.T) {
-	// func createRepoStruct(name string, url string) (Repository, error)
-	t.Run("createRepoStruct()", func(t *testing.T) {
-		repo, err := createRepoStruct("repo-name", "file:/invalid-path")
-		if err.Error() != "Repository path must be file:// or s3:// ..." {
-			t.Errorf("createRepoStruct() return an error \"%s\", want \"Repository path must be file:// of s3:// ...\"", err)
-		}
-		repo, err = createRepoStruct("repo-name", "file://relative-path")
-		if err != nil {
-			t.Errorf("createRepoStruct() return an error \"%s\", want nil", err)
-		}
-		if repo.Name != "repo-name" ||
-			repo.Location.String() != "file://relative-path" {
-			t.Errorf("createRepoStruct() = %s, want {Name: \"repo-name\", Location: file://relative-path", repo)
-		}
-	})
+
+	// func strs2repository(elements []string) (Repository, error)
+	// FIXME: Add the test case
 
 	// func writeRepos(repos []Repository) error
 	//   use fileOp.writeLines(), fileOp.rootDir()
@@ -35,9 +23,9 @@ func TestCommandsRepository(t *testing.T) {
 					t.Errorf("fileOp.writeLines is called with unknown path %s", path)
 				}
 				if len(lines) != 3 ||
-					lines[0] != "repo-relative file://path-relative" ||
-					lines[1] != "repo-absolute file:///path-absolute" ||
-					lines[2] != "repo-new file://repo-new" {
+					lines[0] != "name:repo-relative type:file path:path-relative" ||
+					lines[1] != "name:repo-absolute type:file path:/path-absolute" ||
+					lines[2] != "name:repo-new type:file path:repo-new" {
 					t.Errorf("fileOp.writeLines is called with unknown lines %s", lines)
 					for i, line := range lines {
 						fmt.Fprintf(os.Stderr, "    lines[%d] : \"%s\"\n", i, line)
@@ -62,8 +50,8 @@ func TestCommandsRepository(t *testing.T) {
 			panic("fileOp.loadLines is called with unknown path " + path)
 		}
 		return []string{
-			"repo-relative file://path-relative",
-			"repo-absolute file:///path-absolute",
+			"name:repo-relative type:file path:path-relative",
+			"name:repo-absolute type:file path:/path-absolute",
 		}, nil
 	}
 	rootDir := func() string {
@@ -82,9 +70,9 @@ func TestCommandsRepository(t *testing.T) {
 			t.Errorf("loadRepos() return an error \"%s\", want nil", err)
 		}
 		if len(repos) != 3 ||
-			repos[0].Name != "self" || repos[0].Location.String() != "file://root" ||
-			repos[1].Name != "repo-relative" || repos[1].Location.String() != "file://path-relative" ||
-			repos[2].Name != "repo-absolute" || repos[2].Location.String() != "file:///path-absolute" {
+			repos[0].Name != "self" || repos[0].Location.String() != "type:file path:root" ||
+			repos[1].Name != "repo-relative" || repos[1].Location.String() != "type:file path:path-relative" ||
+			repos[2].Name != "repo-absolute" || repos[2].Location.String() != "type:file path:/path-absolute" {
 			t.Errorf("loadRepos() = %s", repos)
 		}
 	})
@@ -100,16 +88,16 @@ func TestCommandsRepository(t *testing.T) {
 		if err != nil {
 			t.Errorf("findRepo(\"self\") return an error \"%s\", want nil", err)
 		}
-		if repo.Name != "self" || repo.Location.String() != "file://root" {
-			t.Errorf("findRepo(\"self\") %s, want Repository{Name: \"self\", Location: file://root", repo)
+		if repo.String() != "name:self type:file path:root" {
+			t.Errorf("findRepo(\"self\") %s, want Repository{name:self type:file path:root}", repo)
 		}
 
 		repo, err = findRepo("repo-relative")
 		if err != nil {
 			t.Errorf("findRepo(\"repo-relative\") return an error \"%s\", want nil", err)
 		}
-		if repo.Name != "repo-relative" || repo.Location.String() != "file://path-relative" {
-			t.Errorf("findRepo(\"repo-relative\") %s, want Repository{Name: \"repo-relative\", Location: file://path-relative", repo)
+		if repo.String() != "name:repo-relative type:file path:path-relative" {
+			t.Errorf("findRepo(\"repo-relative\") %s, want Repository{name:self type:file path:path-relative}", repo)
 		}
 
 		repo, err = findRepo("repo-relativ")
@@ -129,9 +117,9 @@ func TestCommandsRepository(t *testing.T) {
 					t.Errorf("fileOp.writeLines is called with unknown path %s", path)
 				}
 				if len(lines) != 3 ||
-					lines[0] != "repo-relative file://path-relative" ||
-					lines[1] != "repo-absolute file:///path-absolute" ||
-					lines[2] != "repo-new file://path-new" {
+					lines[0] != "name:repo-relative type:file path:path-relative" ||
+					lines[1] != "name:repo-absolute type:file path:/path-absolute" ||
+					lines[2] != "name:repo-new type:file path:path-new" {
 					t.Errorf("fileOp.writeLines is called with unkwnown lines %s", lines)
 				}
 				return nil
@@ -153,26 +141,26 @@ func TestCommandsRepository(t *testing.T) {
 		}
 
 		// bad case, repository name includes white space
-		err := repositoryActionAdd("repo include white space", "file://path-new")
-		if err.Error() != "Repository name must not include space" {
-			t.Errorf("repositoryActionAdd(\"repo include white space\", \"file://path-new\") return an error \"%s\", want \"Repository name must not include space\"", err)
+		err := repositoryActionAdd([]string{"name:repo include white space", "type:file", "path:path-new"})
+		if err.Error() != "Including space in repository definition is not supported" {
+			t.Errorf("repositoryActionAdd([]string{\"name:repo include white space\", \"type:file\", \"path:path-new\"}) return an error \"%s\", want \"Repository name must not include space\"", err)
 		}
 
 		// bad case, repository name conflicts
-		err = repositoryActionAdd("repo-relative", "file:///path/to/dir")
+		err = repositoryActionAdd([]string{"name:repo-relative", "type:file", "path:/path/to/dir"})
 		if err.Error() != "The repository name already exists" {
-			t.Errorf("repositoryActionAdd(\"repo-relative\", \"file:///path/to/dir\") return an error \"%s\", want \"The repository name already exists\"", err)
+			t.Errorf("repositoryActionAdd([]string{\"name:repo-relative\",\"type:file\", \"path:/path/to/dir\"}) return an error \"%s\", want \"The repository name already exists\"", err)
 		}
 		// bad case, repository path is invalid
-		err = repositoryActionAdd("repo-new", "invalid-path")
-		if err.Error() != "Repository path must be file:// or s3:// ..." {
+		err = repositoryActionAdd([]string{"name:repo-new", "invalid-path"})
+		if err.Error() != "Repository definition is invalid syntax" {
 			t.Errorf("repositoryActionAdd(\"repo-new\", \"invalid-path\") return an error \"%s\", want \"Repository path must be file:// of s3:// ...\"", err)
 		}
 
 		// success case
-		err = repositoryActionAdd("repo-new", "file://path-new")
+		err = repositoryActionAdd([]string{"name:repo-new", "type:file", "path:path-new"})
 		if err != nil {
-			t.Errorf("repositoryActionAdd(\"repo-new\", \"file://path-new\") return an error \"%s\", want nil", err)
+			t.Errorf("repositoryActionAdd([]string{\"name:repo-new\", \"type:file\", \"path:path-new\"}) return an error \"%s\", want nil", err)
 		}
 	})
 
@@ -187,7 +175,7 @@ func TestCommandsRepository(t *testing.T) {
 					t.Errorf("fileOp.writeLines is called with unknown path %s", path)
 				}
 				if len(lines) != 1 ||
-					lines[0] != "repo-absolute file:///path-absolute" {
+					lines[0] != "name:repo-absolute type:file path:/path-absolute" {
 					t.Errorf("fileOp.writeLines is called with unknown lines %s", lines)
 				}
 				return nil
