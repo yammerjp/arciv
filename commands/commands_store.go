@@ -22,6 +22,7 @@ func storeCommand(cmd *cobra.Command, args []string) {
 
 func init() {
 	RootCmd.AddCommand(storeCmd)
+	storeCmd.Flags().BoolVarP(&runFastlyOption, "fast", "s", false, "Check fastly with checking timestamp, without checking file hash")
 }
 
 func storeAction(repoName string) (err error) {
@@ -30,7 +31,7 @@ func storeAction(repoName string) (err error) {
 		return err
 	}
 
-	commit, err := createCommitStructure()
+	commit, err := createCommitStructure(runFastlyOption)
 	if err != nil {
 		return err
 	}

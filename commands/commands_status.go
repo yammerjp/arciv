@@ -20,13 +20,16 @@ func statusCommand(cmd *cobra.Command, args []string) {
 	}
 }
 
+var runFastlyOption bool
+
 func init() {
 	RootCmd.AddCommand(statusCmd)
-	statusCmd.Flags().BoolVarP(&simplyPrinting, "simple", "s", false, "Print simply")
+	statusCmd.Flags().BoolVarP(&simplyPrinting, "simple", "m", false, "Print simply")
+	statusCmd.Flags().BoolVarP(&runFastlyOption, "fast", "s", false, "Check fastly with checking timestamp, without checking file hash")
 }
 
 func statusAction() (err error) {
-	nowCommit, err := createCommitStructure()
+	nowCommit, err := createCommitStructure(runFastlyOption)
 	if err != nil {
 		return err
 	}

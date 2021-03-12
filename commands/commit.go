@@ -23,20 +23,41 @@ func init() {
 	}
 }
 
-func createCommitStructure() (Commit, error) {
-	// Tags
+func createCommitStructure(fastly bool) (c Commit, err error) {
 	root := fileOp.rootDir()
+	// Tags
 	paths, err := fileOp.findFilePaths(root)
 	if err != nil {
 		return Commit{}, err
 	}
 	var tags []Tag
 	for _, path := range paths {
-		tag, err := tagging(root, path)
+		tag, err := tagging(root, path, !fastly)
 		if err != nil {
 			return Commit{}, err
 		}
 		tags = append(tags, tag)
+	}
+	if fastly {
+		latestCommit, err := SelfRepo().LoadLatestCommit()
+		if err != nil {
+			return Commit{}, err
+		}
+		for i, tag := range tags {
+			lci := findTagIndex(latestCommit.Tags, tag, FIND_PATH|FIND_TIMESTAMP)
+			if lci != -1 && tag.UsedTimestamp {
+				// path and timestamp is same as latest commit's one
+				//   hash will be same as latest commit's one (fast mode)
+				tags[i] = latestCommit.Tags[lci]
+				continue
+			}
+			hash, err := fileOp.hashFile(root + "/" + tag.Path)
+			if err != nil {
+				return Commit{}, err
+			}
+			tags[i].Hash = hash
+			tags[i].UsedHash = true
+		}
 	}
 	sort.Slice(tags, func(i, j int) bool {
 		return compareTag(tags[i], tags[j]) < 0
@@ -60,12 +81,16 @@ func createCommitStructure() (Commit, error) {
 	}, nil
 }
 
-func tagging(root, relativePath string) (Tag, error) {
+func tagging(root, relativePath string, withHashing bool) (tag Tag, err error) {
 	path := root + "/" + relativePath
 	// hash
-	hash, err := fileOp.hashFile(path)
-	if err != nil {
-		return Tag{}, err
+
+	var hash Hash
+	if withHashing {
+		hash, err = fileOp.hashFile(path)
+		if err != nil {
+			return Tag{}, err
+		}
 	}
 
 	//timestamp
@@ -79,5 +104,6 @@ func tagging(root, relativePath string) (Tag, error) {
 		Hash:          hash,
 		Timestamp:     timestamp,
 		UsedTimestamp: true,
+		UsedHash:      withHashing,
 	}, nil
 }

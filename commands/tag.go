@@ -13,6 +13,7 @@ type Tag struct {
 	Hash          Hash
 	Timestamp     int64
 	UsedTimestamp bool
+	UsedHash      bool
 }
 
 func (tag Tag) String() string {
@@ -33,6 +34,7 @@ func str2Tag(line string) (Tag, error) {
 		Hash:          hash,
 		Timestamp:     0,
 		UsedTimestamp: false,
+		UsedHash:      true,
 	}, nil
 }
 

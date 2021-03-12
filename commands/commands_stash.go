@@ -22,7 +22,7 @@ func stashCommand(cmd *cobra.Command, args []string) {
 }
 
 func stashAction() (err error) {
-	commit, err := createCommitStructure()
+	commit, err := createCommitStructure(runFastlyOption)
 	if err != nil {
 		return err
 	}
@@ -69,4 +69,5 @@ func stashTags(tags []Tag) (err error) {
 
 func init() {
 	RootCmd.AddCommand(stashCmd)
+	stashCmd.Flags().BoolVarP(&runFastlyOption, "fast", "s", false, "Check fastly with checking timestamp, without checking file hash")
 }

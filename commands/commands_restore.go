@@ -39,7 +39,7 @@ func restoreAction(repoName, commitAlias string) (err error) {
 	}
 
 	// check no changes
-	localCommit, err := createCommitStructure()
+	localCommit, err := createCommitStructure(runFastlyOption)
 	if err != nil {
 		return err
 	}
@@ -102,4 +102,5 @@ func init() {
 	RootCmd.AddCommand(restoreCmd)
 	restoreCmd.Flags().BoolVarP(&dryRunning, "dry-run", "d", false, "Show downloading files if you excute the subcommand 'restore'")
 	restoreCmd.Flags().BoolVarP(&forceExcution, "force", "f", false, "Restore forcely even if files of the self repository is not commited")
+	restoreCmd.Flags().BoolVarP(&runFastlyOption, "fast", "s", false, "Check fastly with checking timestamp, without checking file hash")
 }
