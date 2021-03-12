@@ -9,7 +9,44 @@ import (
 func TestCommandsRepository(t *testing.T) {
 
 	// func strs2repository(elements []string) (Repository, error)
-	// FIXME: Add the test case
+	t.Run("strs2repository()", func(t *testing.T) {
+		got, err := strs2repository([]string{"path:path/to/dir", "name:repoName", "type:file"})
+		if err != nil {
+		}
+		if got.String() != "name:repoName type:file path:path/to/dir" {
+			t.Errorf("strs2repository() return Repository{%s}, want Repository{name:repoName type:file path:path/to/dir}", got)
+		}
+		got, err = strs2repository([]string{"name:repo-s3", "type:s3", "bucket:bucket-name", "region:region-name"})
+		if err != nil {
+			t.Errorf("strs2repository() return an error \"%s\", want nil", err)
+		}
+		if got.String() != "name:repo-s3 type:s3 region:region-name bucket:bucket-name" {
+			t.Errorf("strs2repository() return Repository{%s}, want Repository{name:repo-s3 type:s3 region:region-name bucket:bucket-name}", got)
+		}
+
+		_, err = strs2repository([]string{"name:repo-name path:path/to/dir"})
+		if err.Error() != "Unknown repository's type" {
+			t.Errorf("strs2repository() return an error \"%s\", want \"Unknown repository's type\"", err)
+		}
+
+		_, err = strs2repository([]string{"path:hoge", "type:file"})
+		if err.Error() != "Repository's name is not specified" {
+
+			t.Errorf("strs2repository() return an error \"%s\", want \"Repository's name is not specified\"", err)
+		}
+		_, err = strs2repository([]string{"type:s3", "name:n", "bucket:b"})
+		if err.Error() != "Repository's type is s3, but bucket or region is not specified" {
+			t.Errorf("strs2repository() return an error \"%s\", want \"Repository's type is s3, but bucket or region is not specified\"", err)
+		}
+		_, err = strs2repository([]string{"type:s3", "name:n", "region:r"})
+		if err.Error() != "Repository's type is s3, but bucket or region is not specified" {
+			t.Errorf("strs2repository() return an error \"%s\", want \"Repository's type is s3, but bucket or region is not specified\"", err)
+		}
+		_, err = strs2repository([]string{"type:s3", "name:a", "region:r", "unknownstring"})
+		if err.Error() != "Repository definition is invalid syntax" {
+			t.Errorf("strs2repository() return an error \"%s\", want \"Repository definition is invalid syntax\"", err)
+		}
+	})
 
 	// func writeRepos(repos []Repository) error
 	//   use fileOp.writeLines(), fileOp.rootDir()

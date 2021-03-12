@@ -163,7 +163,7 @@ func strs2repository(elements []string) (Repository, error) {
 	}
 	if rtype == "s3" {
 		if bucket == "" || region == "" {
-			return Repository{}, errors.New("Repository's type is file, but bucket or region is not specified")
+			return Repository{}, errors.New("Repository's type is s3, but bucket or region is not specified")
 		}
 		return Repository{Name: name, Location: RepositoryLocationS3{RegionName: region, BucketName: bucket}}, nil
 	}
