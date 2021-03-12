@@ -25,8 +25,7 @@ func s3lowaccessCommand(cmd *cobra.Command, args []string) {
 func s3lowaccessAction(args []string) error {
 	if len(args) == 1 && args[0] == "list-blob" {
 		// arciv s3lowaccess list-blob
-		prepareS3BucketClient("arciv-development-backet", "ap-northeast-1")
-		blobNames, err := s3Op.findFilePaths(".arciv/blob")
+		blobNames, err := s3Op.findFilePaths("ap-northeast-1", "arciv-development-backet", ".arciv/blob")
 		if err != nil {
 			return err
 		}
@@ -37,8 +36,7 @@ func s3lowaccessAction(args []string) error {
 	}
 	if len(args) == 2 && args[0] == "load" {
 		// arciv s3lowaccess load <key>
-		prepareS3BucketClient("arciv-development-backet", "ap-northeast-1")
-		lines, err := s3Op.loadLines(args[1])
+		lines, err := s3Op.loadLines("ap-northeast-1", "arciv-development-backet", args[1])
 		if err != nil {
 			return err
 		}
@@ -49,13 +47,11 @@ func s3lowaccessAction(args []string) error {
 	}
 	if len(args) == 3 && args[0] == "download" {
 		// arciv s3lowaccess download <key> <write-path>
-		prepareS3BucketClient("arciv-development-backet", "ap-northeast-1")
-		return s3Op.receiveBlobs([]string{args[2]}, []string{args[1]})
+		return s3Op.receiveBlobs("ap-northeast-1", "arciv-development-backet", []string{args[2]}, []string{args[1]})
 	}
 	if len(args) == 3 && args[0] == "upload" {
 		// arciv s3lowaccess upload <key> <read-path>
-		prepareS3BucketClient("arciv-development-backet", "ap-northeast-1")
-		return s3Op.sendBlobs([]string{args[2]}, []string{args[1]})
+		return s3Op.sendBlobs("ap-northeast-1", "arciv-development-backet", []string{args[2]}, []string{args[1]})
 	}
 	if len(args) == 2 && args[0] == "write" {
 		// arciv s3lowaccess write <key> (read from stdin)
@@ -64,8 +60,7 @@ func s3lowaccessAction(args []string) error {
 		for stdin.Scan() {
 			lines = append(lines, stdin.Text())
 		}
-		prepareS3BucketClient("arciv-development-backet", "ap-northeast-1")
-		return s3Op.writeLines(args[1], lines)
+		return s3Op.writeLines("ap-northeast-1", "arciv-development-backet", args[1], lines)
 	}
 	fmt.Println("Usage:")
 	fmt.Println("  arciv s3lowaccess list-blob")

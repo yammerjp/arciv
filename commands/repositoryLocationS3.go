@@ -9,37 +9,33 @@ type RepositoryLocationS3 struct {
 	RegionName string
 }
 
-func (repositoryLocationS3 RepositoryLocationS3) String() string {
-	return "s3://" + repositoryLocationS3.BucketName
+func (r RepositoryLocationS3) String() string {
+	return "s3://" + r.BucketName
 }
 
-func (repositoryLocationS3 RepositoryLocationS3) writeLines(relativePath string, lines []string) error {
-	repositoryLocationS3.prepareClient()
-	return s3Op.writeLines(relativePath, lines)
+func (r RepositoryLocationS3) writeLines(relativePath string, lines []string) error {
+	return s3Op.writeLines(r.RegionName, r.BucketName, relativePath, lines)
 }
 
-func (repositoryLocationS3 RepositoryLocationS3) loadLines(relativePath string) (lines []string, err error) {
-	repositoryLocationS3.prepareClient()
-	return s3Op.loadLines(relativePath)
+func (r RepositoryLocationS3) loadLines(relativePath string) (lines []string, err error) {
+	return s3Op.loadLines(r.RegionName, r.BucketName, relativePath)
 }
 
-func (repositoryLocationS3 RepositoryLocationS3) findFilePaths(root string) (relativePaths []string, err error) {
-	repositoryLocationS3.prepareClient()
-	return s3Op.findFilePaths(root)
+func (r RepositoryLocationS3) findFilePaths(root string) (relativePaths []string, err error) {
+	return s3Op.findFilePaths(r.RegionName, r.BucketName, root)
 }
 
-func (repositoryLocationS3 RepositoryLocationS3) SendLocalBlobs(tags []Tag) (err error) {
+func (r RepositoryLocationS3) SendLocalBlobs(tags []Tag) (err error) {
 	var fromPaths []string
 	var blobNames []string
 	for _, tag := range tags {
 		fromPaths = append(fromPaths, fileOp.rootDir()+"/"+tag.Path)
 		blobNames = append(blobNames, tag.Hash.String())
 	}
-	repositoryLocationS3.prepareClient()
-	return s3Op.sendBlobs(fromPaths, blobNames)
+	return s3Op.sendBlobs(r.RegionName, r.BucketName, fromPaths, blobNames)
 }
 
-func (repositoryLocationS3 RepositoryLocationS3) ReceiveRemoteBlobs(tags []Tag) (err error) {
+func (r RepositoryLocationS3) ReceiveRemoteBlobs(tags []Tag) (err error) {
 	// FIXME: receive restored files from deep archive
 	return errors.New("Download blobs from AWS S3 is not implemented yet...\n Please download from Web console and place the files into .arciv/blob/")
 	/*
@@ -49,11 +45,6 @@ func (repositoryLocationS3 RepositoryLocationS3) ReceiveRemoteBlobs(tags []Tag) 
 			toPaths = append(toPaths, repository.Path+"/.arciv/blob/"+tag.Hash.String())
 			blobNames = append(blobNames, tag.Hash.String())
 		}
-		repositoryLocationS3.prepareClient()
-		return s3Op.receiveBlobs(toPaths, blobNames)
+		return s3Op.receiveBlobs(r.RegionName, r.BucketName, toPaths, blobNames)
 	*/
-}
-
-func (repositoryLocationS3 RepositoryLocationS3) prepareClient() {
-	prepareS3BucketClient(repositoryLocationS3.BucketName, repositoryLocationS3.RegionName)
 }

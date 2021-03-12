@@ -58,19 +58,18 @@ func (repositoryLocationFile RepositoryLocationFile) Init() error {
 	return nil
 }
 
-func (repositoryLocationS3 RepositoryLocationS3) Init() error {
-	repositoryLocationS3.prepareClient()
+func (r RepositoryLocationS3) Init() error {
 	// FIXME: add a func, s3Op.Exist("  key string  ")
-	_, err := s3Op.loadLines(".arciv/repositories")
+	_, err := s3Op.loadLines(r.RegionName, r.BucketName, ".arciv/repositories")
 	if err != nil {
-		err = s3Op.writeLines(".arciv/repositories", []string{})
+		err = s3Op.writeLines(r.RegionName, r.BucketName, ".arciv/repositories", []string{})
 		if err != nil {
 			return err
 		}
 	}
-	_, err = s3Op.loadLines(".arciv/timeline")
+	_, err = s3Op.loadLines(r.RegionName, r.BucketName, ".arciv/timeline")
 	if err != nil {
-		err = s3Op.writeLines(".arciv/timeline", []string{})
+		err = s3Op.writeLines(r.RegionName, r.BucketName, ".arciv/timeline", []string{})
 		if err != nil {
 			return err
 		}

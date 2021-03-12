@@ -15,12 +15,12 @@ import (
 )
 
 type S3Op struct {
-	findFilePaths func(root string) (relativePaths []string, err error)
-	writeLines   func(path string, lines []string) error
-	loadLines    func(path string) ([]string, error)
-	sendBlobs    func(paths, names []string) error
-	receiveBlobs func(paths, names []string) error
-	// receiveBlobsRequest func(names []string, validDays int) (restoreNames []string, err error)
+	findFilePaths func(region string, bucket string, root string) (relativePaths []string, err error)
+	writeLines    func(region string, bucket string, path string, lines []string) error
+	loadLines     func(region string, bucket string, path string) ([]string, error)
+	sendBlobs     func(region string, bucket string, paths, names []string) error
+	receiveBlobs  func(region string, bucket string, paths, names []string) error
+	// receiveBlobsRequest func(region string, bucket string, names []string, validDays int) (restoreNames []string, err error)
 }
 
 var s3Op *S3Op
@@ -33,18 +33,20 @@ type S3BucketClient struct {
 
 var s3BucketClient *S3BucketClient
 
-func prepareS3BucketClient(bucketName, regionName string) {
-	if s3BucketClient != nil && s3BucketClient.BucketName == bucketName && s3BucketClient.RegionName == regionName {
-		return
+func client(region, bucket string) *S3BucketClient {
+	if s3BucketClient != nil && s3BucketClient.RegionName == region && s3BucketClient.BucketName == bucket {
+		return s3BucketClient
 	}
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(regionName))
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(region))
 	if err != nil {
 		panic(err)
 	}
 	s3BucketClient = &S3BucketClient{
 		S3client:   s3.NewFromConfig(cfg),
-		BucketName: bucketName,
+		RegionName: region,
+		BucketName: bucket,
 	}
+	return s3BucketClient
 }
 
 func (bucketClient S3BucketClient) list() (keys []string, err error) {
@@ -70,7 +72,7 @@ func (bucketClient S3BucketClient) list() (keys []string, err error) {
 	return keys, nil
 }
 
-func (bucketClient S3BucketClient) getReader(key string) (io.Reader, error) {
+func (bucketClient S3BucketClient) getLines(key string) (lines []string, err error) {
 	got, err := bucketClient.S3client.GetObject(
 		context.TODO(),
 		&s3.GetObjectInput{
@@ -79,17 +81,9 @@ func (bucketClient S3BucketClient) getReader(key string) (io.Reader, error) {
 		},
 	)
 	if err != nil {
-		return nil, err
-	}
-	return got.Body, nil
-}
-
-func (bucketClient S3BucketClient) getLines(key string) (lines []string, err error) {
-	reader, err := bucketClient.getReader(key)
-	if err != nil {
 		return []string{}, err
 	}
-	scanner := bufio.NewScanner(reader)
+	scanner := bufio.NewScanner(got.Body)
 	scanner.Split(bufio.ScanLines)
 	for scanner.Scan() {
 		lines = append(lines, scanner.Text())
@@ -98,7 +92,13 @@ func (bucketClient S3BucketClient) getLines(key string) (lines []string, err err
 }
 
 func (bucketClient S3BucketClient) getFile(key, localPath string) error {
-	reader, err := bucketClient.getReader(key)
+	got, err := bucketClient.S3client.GetObject(
+		context.TODO(),
+		&s3.GetObjectInput{
+			Bucket: &bucketClient.BucketName,
+			Key:    &key,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -108,29 +108,21 @@ func (bucketClient S3BucketClient) getFile(key, localPath string) error {
 	}
 	defer file.Close()
 
-	_, err = io.Copy(file, reader)
+	_, err = io.Copy(file, got.Body)
 	return err
 }
 
-func (bucketClient S3BucketClient) putReader(key string, reader io.Reader, storageClass types.StorageClass) error {
+func (bucketClient S3BucketClient) putLines(key string, lines []string) error {
 	_, err := bucketClient.S3client.PutObject(
 		context.TODO(),
 		&s3.PutObjectInput{
 			Bucket:       &bucketClient.BucketName,
 			Key:          &key,
-			Body:         reader,
-			StorageClass: storageClass,
+			Body:         strings.NewReader(strings.Join(lines, "\n")),
+			StorageClass: types.StorageClassStandard,
 		},
 	)
 	return err
-}
-
-func (bucketClient S3BucketClient) putLines(key string, lines []string) error {
-	return bucketClient.putReader(
-		key,
-		strings.NewReader(strings.Join(lines, "\n")),
-		types.StorageClassStandard,
-	)
 }
 
 func (bucketClient S3BucketClient) putFile2deepArchive(key, localPath string) error {
@@ -139,9 +131,19 @@ func (bucketClient S3BucketClient) putFile2deepArchive(key, localPath string) er
 		return err
 	}
 	defer f.Close()
-	return bucketClient.putReader(key, f, types.StorageClassDeepArchive)
+	_, err = bucketClient.S3client.PutObject(
+		context.TODO(),
+		&s3.PutObjectInput{
+			Bucket:       &bucketClient.BucketName,
+			Key:          &key,
+			Body:         f,
+			StorageClass: types.StorageClassDeepArchive,
+		},
+	)
+	return err
 }
 
+/*
 func (bucketClient S3BucketClient) restoreRequest(key string, restoreKeyRequest string, validDays int32) (restoreKey string, err error) {
 	got, err := bucketClient.S3client.RestoreObject(
 		context.TODO(),
@@ -163,61 +165,46 @@ func (bucketClient S3BucketClient) restoreRequest(key string, restoreKeyRequest 
 		return "", err
 	}
 	return *got.RestoreOutputPath, nil
-}
+}*/
 
 func init() {
 	s3Op = &S3Op{
-		findFilePaths: func(root string) (relativePaths []string, err error) {
-			if s3BucketClient == nil {
-				return []string{}, errors.New("S3BucketClient is not prepared")
-			}
-			keys, err := s3BucketClient.list()
+		findFilePaths: func(region string, bucket string, root string) (relativePaths []string, err error) {
+			keys, err := client(region, bucket).list()
 			if err != nil {
 				return []string{}, err
 			}
 			for _, key := range keys {
-				if strings.HasPrefix(key, root + "/") {
+				if strings.HasPrefix(key, root+"/") {
 					relativePaths = append(relativePaths, key[len(root)+1:])
 				}
 			}
 			return relativePaths, nil
 		},
-		writeLines: func(path string, lines []string) error {
-			if s3BucketClient == nil {
-				return errors.New("S3BucketClient is not prepared")
-			}
-			return s3BucketClient.putLines(path, lines)
+		writeLines: func(region string, bucket string, path string, lines []string) error {
+			return client(region, bucket).putLines(path, lines)
 		},
-		loadLines: func(path string) ([]string, error) {
-			if s3BucketClient == nil {
-				return []string{}, errors.New("S3BucketClient is not prepared")
-			}
-			return s3BucketClient.getLines(path)
+		loadLines: func(region string, bucket string, path string) ([]string, error) {
+			return client(region, bucket).getLines(path)
 		},
-		sendBlobs: func(paths, names []string) error {
-			if s3BucketClient == nil {
-				return errors.New("S3BucketClient is not prepared")
-			}
+		sendBlobs: func(region string, bucket string, paths, names []string) error {
 			if len(paths) != len(names) {
 				return errors.New("arguments of receiveBlobs() require the same length slice")
 			}
 			for i, path := range paths {
-				err := s3BucketClient.putFile2deepArchive(names[i], path)
+				err := client(region, bucket).putFile2deepArchive(names[i], path)
 				if err != nil {
 					return err
 				}
 			}
 			return nil
 		},
-		receiveBlobs: func(paths, names []string) error {
-			if s3BucketClient == nil {
-				return errors.New("S3BucketClient is not prepared")
-			}
+		receiveBlobs: func(region string, bucket string, paths, names []string) error {
 			if len(paths) != len(names) {
 				return errors.New("arguments of receiveBlobs() require the same length slice")
 			}
 			for i, path := range paths {
-				err := s3BucketClient.getFile(names[i], path)
+				err := client(region, bucket).getFile(names[i], path)
 				if err != nil {
 					return err
 				}
@@ -225,12 +212,9 @@ func init() {
 			return nil
 		},
 		/*
-			receiveBlobsRequest: func(names []string, validDays int) (restoreNames []string, err error) {
-				if s3BucketClient == nil {
-					return []string{}, errors.New("S3BucketClient is not prepared")
-				}
+			receiveBlobsRequest: func(region string, bucket string, names []string, validDays int) (restoreNames []string, err error) {
 				for _, name := range names {
-					restoreName, err := s3BucketClient.restoreRequest(name)
+					restoreName, err := client(string, bucket).restoreRequest(name)
 					if err != nil {
 						return restoreNames, err
 					}
