@@ -64,34 +64,35 @@ func TestCommit(t *testing.T) {
 		if got.Timestamp != 0x1234 {
 			t.Errorf("createCommitStructure() return commit, commit.Timestamp = 0x%.8x, want 0x00001234", got.Timestamp)
 		}
-		if got.Id != "00001234-8fab619ff44e3d2ce334a5aaad4ba77e34641e43a0f6c4aa536134ebdf226118" {
-			t.Errorf("createCommitStructure() return commit, commit.Id = %s, want \"00001234-8fab619ff44e3d2ce334a5aaad4ba77e34641e43a0f6c4aa536134ebdf226118\"", got.Id)
+		if got.Id != "00001234-f6d531a00f7021b7ca596dc89d9d1e34510d66925aacf9401b23950a47542a41" {
+			t.Errorf("createCommitStructure() return commit, commit.Id = %s, want \"00001234-f6d531a00f7021b7ca596dc89d9d1e34510d66925aacf9401b23950a47542a41\"", got.Id)
+
 		}
-		if got.Hash.String() != "8fab619ff44e3d2ce334a5aaad4ba77e34641e43a0f6c4aa536134ebdf226118" {
-			t.Errorf("createCommitStructure() return commit, commit.Hash.String() = %s, want \"8fab619ff44e3d2ce334a5aaad4ba77e34641e43a0f6c4aa536134ebdf226118\"", got.Hash.String())
+		if got.Hash.String() != "f6d531a00f7021b7ca596dc89d9d1e34510d66925aacf9401b23950a47542a41" {
+			t.Errorf("createCommitStructure() return commit, commit.Hash.String() = %s, want \"f6d531a00f7021b7ca596dc89d9d1e34510d66925aacf9401b23950a47542a41\"", got.Hash.String())
 		}
 
-		want := "a888888888888888888888888888888888888888888888888888888888888883 00000002 path3"
+		want := "a888888888888888888888888888888888888888888888888888888888888883 path3"
 		if got.Tags[0].String() != want {
 			t.Errorf("createCommitStructure() return commit, commit.Tags[0].String() = %s, want \"%s\"", got.Tags[0].String(), want)
 		}
-		want = "b888888888888888888888888888888888888888888888888888888888888882 00000003 path2"
+		want = "b888888888888888888888888888888888888888888888888888888888888882 path2"
 		if got.Tags[1].String() != want {
 			t.Errorf("createCommitStructure() return commit, commit.Tags[1].String() = %s, want \"%s\"", got.Tags[1].String(), want)
 		}
-		want = "c888888888888888888888888888888888888888888888888888888888888881 00000004 path1"
+		want = "c888888888888888888888888888888888888888888888888888888888888881 path1"
 		if got.Tags[2].String() != want {
 			t.Errorf("createCommitStructure() return commit, commit.Tags[2].String() = %s, want \"%s\"", got.Tags[2].String(), want)
 		}
-		want = "d888888888888888888888888888888888888888888888888888888888888884 00000001 path4"
+		want = "d888888888888888888888888888888888888888888888888888888888888884 path4"
 		if got.Tags[3].String() != want {
 			t.Errorf("createCommitStructure() return commit, commit.Tags[3].String() = %s, want \"%s\"", got.Tags[3].String(), want)
 		}
-		want = "e888888888888888888888888888888888888888888888888888888888888885 00000000 path5"
+		want = "e888888888888888888888888888888888888888888888888888888888888885 path5"
 		if got.Tags[4].String() != want {
 			t.Errorf("createCommitStructure() return commit, commit.Tags[4].String() = %s, want \"%s\"", got.Tags[4].String(), want)
 		}
-		want = "f888888888888888888888888888888888888888888888888888888888888880 00000005 path0"
+		want = "f888888888888888888888888888888888888888888888888888888888888880 path0"
 		if got.Tags[5].String() != want {
 			t.Errorf("createCommitStructure() return commit, commit.Tags[5].String() = %s, want \"%s\"", got.Tags[5].String(), want)
 		}

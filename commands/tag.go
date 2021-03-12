@@ -9,32 +9,30 @@ import (
 )
 
 type Tag struct {
-	Path      string
-	Hash      Hash
-	Timestamp int64
+	Path          string
+	Hash          Hash
+	Timestamp     int64
+	UsedTimestamp bool
 }
 
 func (tag Tag) String() string {
-	return tag.Hash.String() + " " + timestamp2string(tag.Timestamp) + " " + tag.Path
+	return tag.Hash.String() + " " + tag.Path
 }
 
 func str2Tag(line string) (Tag, error) {
-	// 64...Hash, 1...space, 8...timestamp, 1...space
-	if len(line) <= 64+1+8+1 {
+	// 64...Hash, 1...space
+	if len(line) <= 64+1 {
 		return Tag{}, errors.New("The length of Tag's line must be more than 74")
 	}
 	hash, err := hex2hash(line[:64])
 	if err != nil {
 		return Tag{}, err
 	}
-	timestamp, err := str2timestamp(line[65:73])
-	if err != nil {
-		return Tag{}, err
-	}
 	return Tag{
-		Path:      line[74:],
-		Hash:      hash,
-		Timestamp: timestamp,
+		Path:          line[65:],
+		Hash:          hash,
+		Timestamp:     0,
+		UsedTimestamp: false,
 	}, nil
 }
 
@@ -51,14 +49,6 @@ func compareTag(p0, p1 Tag) int {
 	compared := bytes.Compare(p0.Hash, p1.Hash)
 	if compared != 0 {
 		return compared
-	}
-	diff := p0.Timestamp - p1.Timestamp
-	if diff != 0 {
-		if diff < 0 {
-			return -1
-		} else {
-			return 1
-		}
 	}
 	return strings.Compare(p0.Path, p1.Path)
 }

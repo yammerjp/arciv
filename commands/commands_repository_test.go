@@ -166,7 +166,7 @@ func TestCommandsRepository(t *testing.T) {
 				if path != "path-new/.arciv" {
 					t.Errorf("fileOp.findFilePaths is called with unknown path %s", path)
 				}
-				return []string{"repositories", "timeline"}, nil
+				return []string{"repositories", "timeline", "timestamps"}, nil
 			},
 			// for Repository.Init()
 			mkdirAll: func(path string) error {

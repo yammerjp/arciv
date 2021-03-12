@@ -75,8 +75,9 @@ func tagging(root, relativePath string) (Tag, error) {
 	}
 
 	return Tag{
-		Path:      relativePath,
-		Hash:      hash,
-		Timestamp: timestamp,
+		Path:          relativePath,
+		Hash:          hash,
+		Timestamp:     timestamp,
+		UsedTimestamp: true,
 	}, nil
 }

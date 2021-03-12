@@ -22,7 +22,7 @@ func TestTag(t *testing.T) {
 		Hash:      tagHash,
 		Timestamp: tagTimestamp,
 	}
-	tagString := "0223497a0b8b033aa58a3a521b8629869386cf7ab0e2f101963d328aa62193f7 6030cc8d .git/hooks/applypatch-msg.sample"
+	tagString := "0223497a0b8b033aa58a3a521b8629869386cf7ab0e2f101963d328aa62193f7 .git/hooks/applypatch-msg.sample"
 
 	// func (tag Tag) String() string
 	t.Run("Tag{}.String()", func(t *testing.T) {
@@ -45,8 +45,11 @@ func TestTag(t *testing.T) {
 		if bytes.Compare(got.Hash, tagHash) != 0 {
 			t.Errorf("str2Tag(%s) = {Hash: %s ...}, want %s", tagString, got.Hash.String(), tagHash.String())
 		}
-		if got.Timestamp != tagTimestamp {
-			t.Errorf("str2Tag(%s) = {Timestamp: %.8x ...}, want %.8x", tagString, got.Timestamp, tagTimestamp)
+		if got.UsedTimestamp != false {
+			t.Errorf("str2Tag(%s) = {UsedTimestamp:true ...} want false)", tagString)
+		}
+		if got.Timestamp != 0x00000000 {
+			t.Errorf("str2Tag(%s) = {Timestamp: 0x%.8x ...} want 0x00000000", tagString, timestamp2string(got.Timestamp))
 		}
 	})
 
@@ -94,54 +97,54 @@ func TestTag(t *testing.T) {
 			t.Errorf("compareTag(tag, tagShash) = %d, want 1", got)
 		}
 		got = compareTag(tag, tagLtime)
-		if got != -1 {
-			t.Errorf("compareTag(tag, tagLtime) = %d, want -1", got)
+		if got != 0 {
+			t.Errorf("compareTag(tag, tagLtime) = %d, want 0", got)
 		}
 		got = compareTag(tag, tagStime)
-		if got != 1 {
-			t.Errorf("compareTag(tag, tagStime) = %d, want 1", got)
+		if got != 0 {
+			t.Errorf("compareTag(tag, tagStime) = %d, want 0", got)
 		}
 		got = compareTag(tag, tagLhashStime)
 		if got != -1 {
 			t.Errorf("compareTag(tag, tagLhashStime) = %d, want -1", got)
 		}
 		got = compareTag(tag, tagStimeLpath)
-		if got != 1 {
-			t.Errorf("compareTag(tag, tagStimeLpath) = %d, want 1", got)
+		if got != -1 {
+			t.Errorf("compareTag(tag, tagStimeLpath) = %d, want -1", got)
 		}
 
-		// comparing ... tagShash < tagStime < tagStimeLpath < tagSpath < tag < tagLpath < tagLtime < tagLhashStime < tagLhash
-		got = compareTag(tagShash, tagStime)
+		// comparing ... tagShash < tagSpath < tagStime = tag = tagLtime < tagStimeLpath = tagLpath < tagLhashStime = tagLhash
+		got = compareTag(tagShash, tagSpath)
 		if got != -1 {
-			t.Errorf("compareTag(tagShash, tagStime) = %d, want -1", got)
+			t.Errorf("compareTag(tagShash, tagSpath) = %d, want -1", got)
 		}
-		got = compareTag(tagStime, tagStimeLpath)
+		got = compareTag(tagSpath, tagStime)
 		if got != -1 {
-			t.Errorf("compareTag(tagStime, tagStimeLpath) = %d, want -1", got)
+			t.Errorf("compareTag(tagSpath, tagStime) = %d, want -1", got)
 		}
-		got = compareTag(tagStimeLpath, tagSpath)
-		if got != -1 {
-			t.Errorf("compareTag(tagStimeLpath, tagSpath) = %d, want -1", got)
+		got = compareTag(tagStime, tag)
+		if got != 0 {
+			t.Errorf("compareTag(tagStime, tag) = %d, want 0", got)
 		}
-		got = compareTag(tagSpath, tag)
-		if got != -1 {
-			t.Errorf("compareTag(tagSpath, tag) = %d, want -1", got)
+		got = compareTag(tag, tagLtime)
+		if got != 0 {
+			t.Errorf("compareTag(tag, tagLtime) = %d, want 0", got)
 		}
-		got = compareTag(tag, tagLpath)
+		got = compareTag(tagLtime, tagStimeLpath)
 		if got != -1 {
-			t.Errorf("compareTag(tag, tagLpath) = %d, want -1", got)
+			t.Errorf("compareTag(tagLtime, tagStimeLpath) = %d, want -1", got)
 		}
-		got = compareTag(tagLpath, tagLtime)
-		if got != -1 {
-			t.Errorf("compareTag(tagLpath, tagLtime) = %d, want -1", got)
+		got = compareTag(tagStimeLpath, tagLpath)
+		if got != 0 {
+			t.Errorf("compareTag(tagStimeLpath, tagLpath) = %d, want 0", got)
 		}
-		got = compareTag(tagLtime, tagLhashStime)
+		got = compareTag(tagLpath, tagLhashStime)
 		if got != -1 {
-			t.Errorf("compareTag(tagLtime, tagLhashStime) = %d, want -1", got)
+			t.Errorf("compareTag(tagLpath, tagLhashStime) = %d, want -1", got)
 		}
 		got = compareTag(tagLhashStime, tagLhash)
-		if got != -1 {
-			t.Errorf("compareTag(tagLhashStime, tagLhash) = %d, want -1", got)
+		if got != 0 {
+			t.Errorf("compareTag(tagLhashStime, tagLhash) = %d, want 0", got)
 		}
 
 	})

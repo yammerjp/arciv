@@ -55,6 +55,9 @@ func (repositoryLocationFile RepositoryLocationFile) Init() error {
 	if !isIncluded(paths, "timeline") {
 		fileOp.writeLines(repositoryLocationFile.Path+"/.arciv/timeline", []string{})
 	}
+	if !isIncluded(paths, "timestamps") {
+		fileOp.writeLines(repositoryLocationFile.Path+"/.arciv/timestamps", []string{})
+	}
 	return nil
 }
 
@@ -70,6 +73,13 @@ func (r RepositoryLocationS3) Init() error {
 	_, err = s3Op.loadLines(r.RegionName, r.BucketName, ".arciv/timeline")
 	if err != nil {
 		err = s3Op.writeLines(r.RegionName, r.BucketName, ".arciv/timeline", []string{})
+		if err != nil {
+			return err
+		}
+	}
+	_, err = s3Op.loadLines(r.RegionName, r.BucketName, ".arciv/timestamps")
+	if err != nil {
+		err = s3Op.writeLines(r.RegionName, r.BucketName, ".arciv/timestamps", []string{})
 		if err != nil {
 			return err
 		}

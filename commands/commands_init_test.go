@@ -29,7 +29,7 @@ func TestRepositoryInit(t *testing.T) {
 				if root != "root/.arciv" {
 					panic("fileOp.findFilePaths is called with a unknown argument " + root)
 				}
-				return []string{"blob/00000000-0000000000000000000000000000000000000000000000000000000000000000", "blob/11111111-1111111111111111111111111111111111111111111111111111111111111111", "repositories", "timeline"}, nil
+				return []string{"blob/00000000-0000000000000000000000000000000000000000000000000000000000000000", "blob/11111111-1111111111111111111111111111111111111111111111111111111111111111", "repositories", "timeline", "timestamps"}, nil
 			},
 		}
 		err := repo.Init()
@@ -40,6 +40,7 @@ func TestRepositoryInit(t *testing.T) {
 		// create .arciv/repositories, .arciv/timeline
 		fileIsCreatedRepositories := false
 		fileIsCreatedTimeline := false
+		fileIsCreatedTimeStamps := false
 		fileOp = &FileOp{
 			mkdirAll: mkdirAll,
 			writeLines: func(path string, lines []string) error {
@@ -53,8 +54,11 @@ func TestRepositoryInit(t *testing.T) {
 				case "root/.arciv/timeline":
 					fileIsCreatedTimeline = true
 					return nil
+				case "root/.arciv/timestamps":
+					fileIsCreatedTimeStamps = true
+					return nil
 				default:
-					panic("fileOp.mkdirAll is called with unknown path " + path)
+					panic("fileOp.writeLines is called with unknown path " + path)
 				}
 			},
 			findFilePaths: func(root string) ([]string, error) {
@@ -73,6 +77,9 @@ func TestRepositoryInit(t *testing.T) {
 		}
 		if !fileIsCreatedTimeline {
 			t.Errorf("Repository.Init() does not create '.arciv/timeline'")
+		}
+		if !fileIsCreatedTimeStamps {
+			t.Errorf("Repository.Init() does not create '.arciv/timestamps'")
 		}
 	})
 }

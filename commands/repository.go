@@ -85,11 +85,74 @@ func (repository Repository) WriteTags(commit Commit, base *Commit) error {
 			lines = append(lines, "+ "+c.String())
 		}
 	}
-	return repository.Location.writeLines(".arciv/list/"+commit.Id, lines)
+	err := repository.Location.writeLines(".arciv/list/"+commit.Id, lines)
+	if err != nil {
+		return err
+	}
+	lines = []string{"#arciv-timestamps of:" + commit.Id}
+	for _, tag := range commit.Tags {
+		if !tag.UsedTimestamp {
+			return nil
+		}
+		lines = append(lines, tag.Hash.String()+" "+timestamp2string(tag.Timestamp))
+	}
+	return repository.Location.writeLines(".arciv/timestamps", lines)
+}
+
+func (repository Repository) LoadTimestamps(commitId string) ([]Tag, error) {
+	lines, err := repository.Location.loadLines(".arciv/timestamps")
+	if err != nil {
+		return []Tag{}, err
+	}
+	if len(lines) == 0 {
+		// cache is not exist
+		return []Tag{}, nil
+	}
+	if !strings.HasPrefix(lines[0], "#arciv-timestamps of:") {
+		return []Tag{}, errors.New("The first line of .arciv/timestamps must be started with '#arciv-timestamps of:")
+	}
+	if len(lines[0]) < len("#arciv-timestamps of:")+8+1+64 {
+		return []Tag{}, errors.New("The first line of .arciv/timestamps is too short")
+	}
+	if lines[0][len("#arciv-timestamps of:"):len("#arciv-timestamps of:")+8+1+64] != commitId {
+		// cache is old
+		return []Tag{}, nil
+	}
+	var hashAndTimestamps []Tag
+	for _, line := range lines[1:] {
+		if len(line) < 64+1+8 {
+			return []Tag{}, errors.New("a line in .arciv/timestamps is too short")
+		}
+		hash, err := hex2hash(line[:64])
+		if err != nil {
+			return []Tag{}, err
+		}
+		timestamp, err := str2timestamp(line[65 : 65+8])
+		if err != nil {
+			return []Tag{}, err
+		}
+		hashAndTimestamps = append(hashAndTimestamps, Tag{Hash: hash, Timestamp: timestamp, UsedTimestamp: true})
+	}
+	return hashAndTimestamps, nil
 }
 
 func (repository Repository) LoadTags(commitId string) (tags []Tag, depth int, err error) {
-	return repository.loadTagsRecursive(commitId, 0)
+	hashAndTimestamps, err := repository.LoadTimestamps(commitId)
+	if err != nil {
+		return []Tag{}, 0, err
+	}
+	tags, depth, err = repository.loadTagsRecursive(commitId, 0)
+	if err != nil {
+		return []Tag{}, 0, err
+	}
+	for i, tag := range tags {
+		timestampTagIndex := findTagIndex(hashAndTimestamps, Tag{Hash: tag.Hash}, FIND_HASH)
+		if timestampTagIndex != -1 {
+			tags[i].Timestamp = hashAndTimestamps[timestampTagIndex].Timestamp
+			tags[i].UsedTimestamp = true
+		}
+	}
+	return tags, depth, nil
 }
 
 func (repository Repository) loadTagsRecursive(commitId string, depth int) (tags []Tag, retDepth int, err error) {
@@ -137,8 +200,8 @@ func loadTagsFromAtom(body []string) (tags []Tag, err error) {
 
 func loadTagsFromExtension(tags []Tag, body []string) ([]Tag, error) {
 	for _, line := range body {
-		if len(line) < 75 || string(line[1]) != " " {
-			return []Tag{}, errors.New("Length of lines of a commit of extension tag list must be 75 or more")
+		if len(line) <= 2+64+1 || string(line[1]) != " " {
+			return []Tag{}, errors.New("Length of lines of a commit of extension tag list must be 67 or more")
 		}
 
 		tag, err := str2Tag(line[2:])
