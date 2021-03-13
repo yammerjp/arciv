@@ -23,7 +23,7 @@ func (tag Tag) String() string {
 func str2Tag(line string) (Tag, error) {
 	// 64...Hash, 1...space
 	if len(line) <= 64+1 {
-		return Tag{}, errors.New("The length of Tag's line must be more than 74")
+		return Tag{}, errors.New("The length of Tag's line must be more than 65")
 	}
 	hash, err := hex2hash(line[:64])
 	if err != nil {
