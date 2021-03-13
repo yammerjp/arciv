@@ -278,9 +278,19 @@ func (repository Repository) LoadCommit(commitId string) (Commit, error) {
 	return Commit{Id: commitId, Timestamp: timestamp, Hash: hash, Tags: tags, Depth: depth}, nil
 }
 
-func (repository Repository) FetchBlobHashes() ([]string, error) {
-	return repository.Location.findFilePaths(".arciv/blob")
+func (repository Repository) FetchBlobHashes() (blobs []string, err error) {
+	filenames, err := repository.Location.findFilePaths(".arciv/blob")
+  if err != nil {
+    return []string{}, err
+  }
+  for i, filename := range filenames {
+    if len(filename) != 64 {
+      filenames = append(filenames[:i], filenames[i+1:]...)
+    }
+  }
+  return filenames, nil
 }
+
 
 // send from repository's root directory
 func (repository Repository) SendLocalBlobs(tags []Tag) (err error) {
