@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"errors"
 	"github.com/spf13/cobra"
 )
 
@@ -10,12 +11,12 @@ var (
 		Run:   storeCommand,
 		Short: "Store files from the self repository to another repository.",
 		Long:  "Create a commit and send new blobs and timeline to another repository.",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.NoArgs,
 	}
 )
 
 func storeCommand(cmd *cobra.Command, args []string) {
-	if err := storeAction(args[0]); err != nil {
+	if err := storeAction(repositoryNameOption); err != nil {
 		Exit(err, 1)
 	}
 }
@@ -23,9 +24,13 @@ func storeCommand(cmd *cobra.Command, args []string) {
 func init() {
 	RootCmd.AddCommand(storeCmd)
 	storeCmd.Flags().BoolVarP(&runFastlyOption, "fast", "s", false, "Check fastly with checking timestamp, without checking file hash")
+	storeCmd.Flags().StringVarP(&repositoryNameOption, "repository", "r", "", "repository name")
 }
 
 func storeAction(repoName string) (err error) {
+	if repoName == "" {
+		return errors.New("Need to specify repository name")
+	}
 	remoteRepo, err := findRepo(repoName)
 	if err != nil {
 		return err

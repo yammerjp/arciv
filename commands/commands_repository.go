@@ -8,7 +8,7 @@ import (
 
 var (
 	repositoryCmd = &cobra.Command{
-		Use:   "repository ( | add <name> <path> | remove <name>)",
+		Use:   "repository ( | add <repository definitons...> | remove <name>)",
 		Run:   repositoryCommand,
 		Short: "Show, add or remove repositories",
 		Long: `Show, add or remove repositories.

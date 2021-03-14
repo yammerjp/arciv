@@ -7,11 +7,15 @@ import (
 
 var (
 	restoreCmd = &cobra.Command{
-		Use:   "restore <repository> <commit>",
+		Use:   "restore",
 		Run:   restoreCommand,
 		Short: "Restore filles from the specified repository's commit.",
-		Long:  "Restore filles from the specified repository's commit with downloading files that don't exist on local.",
-		Args:  cobra.ExactArgs(2),
+		Long: `Restore filles from the specified repository's commit with downloading files that don't exist on local.
+Example:
+        arciv restore --repository repo-remote --commit a84bfc
+          ... restore files immefiately from the commit 'a84bfc' of the repository 'repo-remote'
+`,
+		Args: cobra.NoArgs,
 	}
 )
 
@@ -19,7 +23,7 @@ var dryRunningOption bool
 var forceExcutionOption bool
 
 func restoreCommand(cmd *cobra.Command, args []string) {
-	if err := restoreAction(args[0], args[1]); err != nil {
+	if err := restoreAction(repositoryNameOption, commitAliasOption); err != nil {
 		Exit(err, 1)
 	}
 }
@@ -29,9 +33,21 @@ func init() {
 	restoreCmd.Flags().BoolVarP(&dryRunningOption, "dry-run", "d", false, "Show downloading files if you excute the subcommand 'restore'")
 	restoreCmd.Flags().BoolVarP(&forceExcutionOption, "force", "f", false, "Restore forcely even if files of the self repository is not commited")
 	restoreCmd.Flags().BoolVarP(&runFastlyOption, "fast", "s", false, "Check fastly with checking timestamp, without checking file hash")
+	restoreCmd.Flags().StringVarP(&repositoryNameOption, "repository", "r", "", "repository name")
+	restoreCmd.Flags().StringVarP(&commitAliasOption, "commit", "c", "", "commit id")
 }
 
 func restoreAction(repoName, commitAlias string) (err error) {
+	if repoName == "" {
+		return errors.New("Need to specify repository name")
+	}
+	if commitAlias == "" {
+		return errors.New("Need to specify commit alias")
+	}
+	return restoreActionImmediately(repoName, commitAlias)
+}
+
+func restoreActionImmediately(repoName, commitAlias string) (err error) {
 	selfRepo, remoteRepo, localCommit, remoteCommit, err := loadReposAndCommits(repoName, commitAlias, runFastlyOption)
 	if err != nil {
 		return err

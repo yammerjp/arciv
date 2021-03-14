@@ -35,6 +35,7 @@ func unstashAction() (err error) {
 }
 
 func unstashTags(tags []Tag) (err error) {
+	// FIXME: chech to be able to excute unstash with .arcv/blob list and tags
 	root := fileOp.rootDir()
 	// mkdir
 	dirSet := make(map[string]struct{})

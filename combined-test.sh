@@ -35,7 +35,7 @@ ${arciv_bin} init
 ${arciv_bin} repository add "name:remote-repo" "path:${remote_repo_dir}" "type:file"
 
 # Store blobs to a remote repository
-${arciv_bin} store remote-repo
+${arciv_bin} store --repository remote-repo
 
 # Delete files of the local repository
 mv "${local_repo_dir}/.arciv" "${testing_tmp_dir}/.arciv"
@@ -45,7 +45,7 @@ mv "${testing_tmp_dir}/.arciv" "${local_repo_dir}/.arciv"
 
 cd ${local_repo_dir}
 # Restore blobs from the remote repository to the local repository 
-${arciv_bin} restore remote-repo "$(${arciv_bin} log --repository remote-repo)" -f
+${arciv_bin} restore --repository remote-repo --commit "$(${arciv_bin} log --repository remote-repo)" -f
 
 # Remove .arciv
 rm -rf "${local_repo_dir}/.arciv"
