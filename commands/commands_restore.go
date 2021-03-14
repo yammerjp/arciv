@@ -15,8 +15,8 @@ var (
 	}
 )
 
-var dryRunning bool
-var forceExcution bool
+var dryRunningOption bool
+var forceExcutionOption bool
 
 func restoreCommand(cmd *cobra.Command, args []string) {
 	if err := restoreAction(args[0], args[1]); err != nil {
@@ -24,27 +24,19 @@ func restoreCommand(cmd *cobra.Command, args []string) {
 	}
 }
 
+func init() {
+	RootCmd.AddCommand(restoreCmd)
+	restoreCmd.Flags().BoolVarP(&dryRunningOption, "dry-run", "d", false, "Show downloading files if you excute the subcommand 'restore'")
+	restoreCmd.Flags().BoolVarP(&forceExcutionOption, "force", "f", false, "Restore forcely even if files of the self repository is not commited")
+	restoreCmd.Flags().BoolVarP(&runFastlyOption, "fast", "s", false, "Check fastly with checking timestamp, without checking file hash")
+}
+
 func restoreAction(repoName, commitAlias string) (err error) {
-	selfRepo := SelfRepo()
-
-	// fetch remoteCommit
-	remoteRepo, err := findRepo(repoName)
+	selfRepo, remoteRepo, localCommit, remoteCommit, err := loadReposAndCommits(repoName, commitAlias, runFastlyOption)
 	if err != nil {
 		return err
 	}
-
-	remoteCommit, err := remoteRepo.LoadCommitFromAlias(commitAlias)
-	if err != nil {
-		return err
-	}
-
-	// check no changes
-	localCommit, err := createCommitStructure(runFastlyOption)
-	if err != nil {
-		return err
-	}
-
-	if !forceExcution {
+	if !forceExcutionOption {
 		localLatestCommitId, err := selfRepo.LoadLatestCommitId()
 		if err != nil {
 			return err
@@ -54,43 +46,18 @@ func restoreAction(repoName, commitAlias string) (err error) {
 		}
 	}
 
-	// filter blob hashes to receive
-	localHashStrings, err := selfRepo.FetchBlobHashes()
+	localBlobs, err := selfRepo.FetchBlobHashes()
 	if err != nil {
 		return err
 	}
-	for _, lTag := range localCommit.Tags {
-		localHashStrings = append(localHashStrings, lTag.Hash.String())
-	}
-	var blobsToReceive []Tag
-	for _, rTag := range remoteCommit.Tags {
-		if !isIncluded(localHashStrings, rTag.Hash.String()) {
-			blobsToReceive = append(blobsToReceive, rTag)
-		}
-	}
-	// FIXME: Check remote blobs exists?....
+	blobsToReceive := blobsShouldReceive(localBlobs, localCommit.Tags, remoteCommit.Tags)
 
-	// download
-	if dryRunning {
-		message("Show downloading files if you excute 'restore'.")
-		for _, tag := range blobsToReceive {
-			messageStdin("download: " + tag.Hash.String() + ", will locate to: " + tag.Path)
-		}
-		return nil
-	}
-	err = remoteRepo.ReceiveRemoteBlobs(blobsToReceive)
+	err = downloadBlobs(remoteRepo, blobsToReceive, dryRunningOption)
 	if err != nil {
 		return err
 	}
 
-	// mv all local files to .arciv/blob
-	err = stashTags(localCommit.Tags)
-	if err != nil {
-		return err
-	}
-
-	// rename and copy
-	err = unstashTags(remoteCommit.Tags)
+	err = replaceAllTags(localCommit.Tags, remoteCommit.Tags)
 	if err != nil {
 		return err
 	}
@@ -98,9 +65,52 @@ func restoreAction(repoName, commitAlias string) (err error) {
 	return selfRepo.AddCommit(remoteCommit)
 }
 
-func init() {
-	RootCmd.AddCommand(restoreCmd)
-	restoreCmd.Flags().BoolVarP(&dryRunning, "dry-run", "d", false, "Show downloading files if you excute the subcommand 'restore'")
-	restoreCmd.Flags().BoolVarP(&forceExcution, "force", "f", false, "Restore forcely even if files of the self repository is not commited")
-	restoreCmd.Flags().BoolVarP(&runFastlyOption, "fast", "s", false, "Check fastly with checking timestamp, without checking file hash")
+func loadReposAndCommits(repoName string, remoteCommitAlias string, localRunFastly bool) (localRepo Repository, remoteRepo Repository, localCommit Commit, remoteCommit Commit, err error) {
+	remoteRepo, err = findRepo(repoName)
+	if err != nil {
+		return Repository{}, Repository{}, Commit{}, Commit{}, err
+	}
+	remoteCommit, err = remoteRepo.LoadCommitFromAlias(remoteCommitAlias)
+	if err != nil {
+		return Repository{}, Repository{}, Commit{}, Commit{}, err
+	}
+	localCommit, err = createCommitStructure(localRunFastly)
+	if err != nil {
+		return Repository{}, Repository{}, Commit{}, Commit{}, err
+	}
+	return SelfRepo(), remoteRepo, localCommit, remoteCommit, nil
+}
+
+func blobsShouldReceive(localBlobs []string, localTags []Tag, remoteTags []Tag) (blobsToReceive []Tag) {
+	for _, lTag := range localTags {
+		localBlobs = append(localBlobs, lTag.Hash.String())
+	}
+	for _, rTag := range remoteTags {
+		if !isIncluded(localBlobs, rTag.Hash.String()) {
+			blobsToReceive = append(blobsToReceive, rTag)
+		}
+	}
+	return blobsToReceive
+}
+
+func downloadBlobs(remoteRepo Repository, blobs []Tag, dryRunning bool) error {
+	// download
+	if dryRunning {
+		message("Show downloading files if you excute 'restore'.")
+		for _, tag := range blobs {
+			messageStdin("download: " + tag.Hash.String() + ", will locate to: " + tag.Path)
+		}
+		return nil
+	}
+	return remoteRepo.ReceiveRemoteBlobs(blobs)
+}
+
+func replaceAllTags(from []Tag, to []Tag) error {
+	// mv all local files to .arciv/blob
+	err := stashTags(from)
+	if err != nil {
+		return err
+	}
+	// rename and copy
+	return unstashTags(to)
 }
