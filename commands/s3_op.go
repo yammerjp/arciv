@@ -202,7 +202,11 @@ func init() {
 				return errors.New("arguments of receiveBlobs() require the same length slice")
 			}
 			for i, path := range paths {
-				err := client(region, bucket).getFile(names[i], path)
+				err := client(region, bucket).getFile(names[i], path+".download")
+				if err != nil {
+					return err
+				}
+				err = fileOp.moveFile(path+".download", path)
 				if err != nil {
 					return err
 				}
