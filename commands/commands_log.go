@@ -14,8 +14,8 @@ var (
 	}
 )
 
-var repoName string
-var commitAlias string
+var repositoryNameOption string
+var commitAliasOption string
 
 func logCommand(cmd *cobra.Command, args []string) {
 	if err := logAction(args); err != nil {
@@ -25,25 +25,25 @@ func logCommand(cmd *cobra.Command, args []string) {
 
 func init() {
 	RootCmd.AddCommand(logCmd)
-	logCmd.Flags().StringVarP(&repoName, "repository", "r", "", "repository name")
-	logCmd.Flags().StringVarP(&commitAlias, "commit", "c", "", "commit id")
+	logCmd.Flags().StringVarP(&repositoryNameOption, "repository", "r", "", "repository name")
+	logCmd.Flags().StringVarP(&commitAliasOption, "commit", "c", "", "commit id")
 }
 
 func logAction(args []string) (err error) {
 	var repo Repository
-	if repoName == "" {
+	if repositoryNameOption == "" {
 		repo = SelfRepo()
 	} else {
-		repo, err = findRepo(repoName)
+		repo, err = findRepo(repositoryNameOption)
 		if err != nil {
 			return err
 		}
 	}
 
-	if commitAlias == "" {
+	if commitAliasOption == "" {
 		return printTimeline(repo)
 	}
-	commit, err := repo.LoadCommitFromAlias(commitAlias)
+	commit, err := repo.LoadCommitFromAlias(commitAliasOption)
 	if err != nil {
 		return err
 	}
