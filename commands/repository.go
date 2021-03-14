@@ -295,12 +295,12 @@ func (repository Repository) SendLocalBlobs(tags []Tag) (err error) {
 	return repository.Location.SendLocalBlobs(tags)
 }
 
-func (r Repository) ReceiveRemoteBlobsRequest(tags []Tag) (keysRequested []string, err error) {
+func (r Repository) ReceiveRemoteBlobsRequest(tags []Tag, validDays int32) (blobsRequested []string, err error) {
 	repositoryLocationS3, ok := r.Location.(RepositoryLocationS3)
 	if !ok {
 		return []string{}, errors.New("Repository.ReceiveRemoteBlobsRequest() is not succeeded with repository s3")
 	}
-	return repositoryLocationS3.ReceiveRemoteBlobsRequest(tags)
+	return repositoryLocationS3.ReceiveRemoteBlobsRequest(tags, validDays)
 }
 
 // receive to .arciv/blob
@@ -329,6 +329,43 @@ func findCommitId(alias string, commitIds []string) (foundCId string, err error)
 		return "", errors.New("Commit is not found")
 	}
 	return foundCId, nil
+}
+
+func findRestoreRequestId(alias string, ids []string) (foundRId string, err error) {
+	for _, id := range ids {
+		if !strings.HasPrefix(id, alias) {
+			continue
+		}
+		if foundRId != "" {
+			return "", errors.New("The alias refer to more than 1 restore-request")
+		}
+		foundRId = id
+	}
+	if foundRId == "" {
+		return "", errors.New("The alias does not refer to anyone")
+	}
+	return foundRId, nil
+}
+
+func (r Repository) LoadRestoreRequest(restoreRequestAlias string) (restoreRequestId string, restoreRequest RestoreRequest, err error) {
+	rIds, err := r.Location.findFilePaths(".arciv/restore-request")
+	if err != nil {
+		return "", RestoreRequest{}, err
+	}
+	rId, err := findRestoreRequestId(restoreRequestAlias, rIds)
+	if err != nil {
+		return "", RestoreRequest{}, err
+	}
+	lines, err := r.Location.loadLines(".arciv/restore-request/" + rId)
+	if err != nil {
+		return "", RestoreRequest{}, err
+	}
+	restoreRequest, err = strs2restoreRequest(lines)
+	return rId, restoreRequest, err
+}
+
+func (r Repository) WriteRestoreRequest(restoreRequestId string, restoreRequest RestoreRequest) error {
+	return r.Location.writeLines(".arciv/"+restoreRequestId, restoreRequest.Strings())
 }
 
 func SelfRepo() Repository {

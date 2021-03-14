@@ -687,4 +687,9 @@ func TestRepository(t *testing.T) {
 			t.Errorf("Repository.AddCommit() return an error %s, want nil", err)
 		}
 	})
+	// FIXME: Please write tests
+	// func (r Repository) ReceiveRemoteBlobsRequest(tags []Tag, validDays int32) (blobsRequested []string, err error)
+	// func findRestoreRequestId(alias string, ids []string) (foundRId string, err error)
+	// func (r Repository) LoadRestoreRequest(restoreRequestAlias string) (restoreRequestId string, restoreRequest RestoreRequest, err error)
+	// func (r Repository) WriteRestoreRequest(restoreRequestId string, restoreRequest RestoreRequest) error
 }

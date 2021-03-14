@@ -2,6 +2,7 @@ package commands
 
 import (
 	"bytes"
+	"errors"
 	"github.com/spf13/cobra"
 	"path/filepath"
 )
@@ -35,7 +36,17 @@ func unstashAction() (err error) {
 }
 
 func unstashTags(tags []Tag) (err error) {
-	// FIXME: chech to be able to excute unstash with .arcv/blob list and tags
+	// Guard to check to be able to excute unstash with .arcv/blob list and tags
+	blobs, err := SelfRepo().FetchBlobHashes()
+	if err != nil {
+		return err
+	}
+	for _, tag := range tags {
+		if !isIncluded(blobs, tag.Hash.String()) {
+			return errors.New("local blob is missing from commit")
+		}
+	}
+
 	root := fileOp.rootDir()
 	// mkdir
 	dirSet := make(map[string]struct{})

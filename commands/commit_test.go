@@ -57,7 +57,8 @@ func TestCommit(t *testing.T) {
 
 	// func createCommitStructure(fastly bool) (Commit, error)
 	t.Run("createCommitStructure(fastly bool) (Commit, error)", func(t *testing.T) {
-		got, err := createCommitStructure(false)
+		runFastlyOption = false
+		got, err := createCommitStructure()
 		if err != nil {
 			t.Errorf("createCommitStructure() return error, %s", err)
 		}
@@ -96,7 +97,7 @@ func TestCommit(t *testing.T) {
 		if got.Tags[5].String() != want {
 			t.Errorf("createCommitStructure() return commit, commit.Tags[5].String() = %s, want \"%s\"", got.Tags[5].String(), want)
 		}
-		// FIXME: Add a test case createCommitStructure(true)
+		// FIXME: Add a test case createCommitStructure() (runFastlyOption = true)
 	})
 
 	// func tagging(root, relativePath string, withHashing bool) (Tag, error)

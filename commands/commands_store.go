@@ -36,7 +36,7 @@ func storeAction(repoName string) (err error) {
 		return err
 	}
 
-	commit, err := createCommitStructure(runFastlyOption)
+	commit, err := createCommitStructure()
 	if err != nil {
 		return err
 	}

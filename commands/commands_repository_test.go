@@ -170,7 +170,7 @@ func TestCommandsRepository(t *testing.T) {
 			},
 			// for Repository.Init()
 			mkdirAll: func(path string) error {
-				if path != "path-new/.arciv/list" && path != "path-new/.arciv/blob" {
+				if path != "path-new/.arciv/list" && path != "path-new/.arciv/blob" && path != "path-new/.arciv/restore-request" {
 					t.Errorf("fileOp.mkdirAll is called with unknown path %s", path)
 				}
 				return nil

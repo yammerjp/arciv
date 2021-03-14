@@ -1,5 +1,10 @@
 package commands
 
+import (
+	"errors"
+	"strings"
+)
+
 type RepositoryLocationS3 struct {
 	BucketName string
 	RegionName string
@@ -31,7 +36,7 @@ func (r RepositoryLocationS3) SendLocalBlobs(tags []Tag) (err error) {
 	return s3Op.sendBlobs(r.RegionName, r.BucketName, fromPaths, blobNames)
 }
 
-func (r RepositoryLocationS3) ReceiveRemoteBlobsRequest(tags []Tag) (keysRequested []string, err error) {
+func (r RepositoryLocationS3) ReceiveRemoteBlobsRequest(tags []Tag, validDays int32) (blobsRequested []string, err error) {
 	var keys []string
 	for _, tag := range tags {
 		key := ".arciv/blob/" + tag.Hash.String()
@@ -39,7 +44,15 @@ func (r RepositoryLocationS3) ReceiveRemoteBlobsRequest(tags []Tag) (keysRequest
 			keys = append(keys, key)
 		}
 	}
-	return s3Op.receiveBlobsRequest(r.RegionName, r.BucketName, keys, 3)
+	keysRequested, err := s3Op.receiveBlobsRequest(r.RegionName, r.BucketName, keys, validDays)
+	// Error check is not needed here! Even if error occures, len(keysRequested) may not zero.
+	for _, key := range keysRequested {
+		if !strings.HasPrefix(key, ".arciv/blob/") {
+			return []string{}, errors.New("keysRequested is not started with '.arciv/blob/'")
+		}
+		blobsRequested = append(blobsRequested, key[len(".arciv/blob/"):])
+	}
+	return blobsRequested, err
 }
 
 func (r RepositoryLocationS3) ReceiveRemoteBlobs(tags []Tag) (err error) {

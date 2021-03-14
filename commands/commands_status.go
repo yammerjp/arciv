@@ -20,8 +20,6 @@ func statusCommand(cmd *cobra.Command, args []string) {
 	}
 }
 
-var runFastlyOption bool
-
 func init() {
 	RootCmd.AddCommand(statusCmd)
 	statusCmd.Flags().BoolVarP(&simplyPrinting, "simple", "m", false, "Print simply")
@@ -29,7 +27,7 @@ func init() {
 }
 
 func statusAction() (err error) {
-	nowCommit, err := createCommitStructure(runFastlyOption)
+	nowCommit, err := createCommitStructure()
 	if err != nil {
 		return err
 	}

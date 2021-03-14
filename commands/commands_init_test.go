@@ -12,6 +12,8 @@ func TestRepositoryInit(t *testing.T) {
 			return nil
 		case "root/.arciv/list":
 			return nil
+		case "root/.arciv/restore-request":
+			return nil
 		default:
 			panic("fileOp.mkdirAll is called with unknown path " + path)
 		}

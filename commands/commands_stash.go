@@ -22,7 +22,7 @@ func stashCommand(cmd *cobra.Command, args []string) {
 }
 
 func stashAction() (err error) {
-	commit, err := createCommitStructure(runFastlyOption)
+	commit, err := createCommitStructure()
 	if err != nil {
 		return err
 	}

@@ -31,7 +31,7 @@ func initAction() error {
 }
 
 func (r Repository) Init() error {
-	createDirsInDotArciv := []string{"list", "blob"}
+	createDirsInDotArciv := []string{"list", "blob", "restore-request"}
 	switch lf := r.Location.(type) {
 	case RepositoryLocationFile:
 		for _, dir := range createDirsInDotArciv {

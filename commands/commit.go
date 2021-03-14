@@ -15,6 +15,7 @@ type Commit struct {
 	Depth     int // memo chained commit depth. use in #arciv-commit-extension
 }
 
+var runFastlyOption bool
 var timestampNow func() int64
 
 func init() {
@@ -23,7 +24,7 @@ func init() {
 	}
 }
 
-func createCommitStructure(fastly bool) (c Commit, err error) {
+func createCommitStructure() (c Commit, err error) {
 	root := fileOp.rootDir()
 	// Tags
 	paths, err := fileOp.findFilePaths(root)
@@ -32,13 +33,13 @@ func createCommitStructure(fastly bool) (c Commit, err error) {
 	}
 	var tags []Tag
 	for _, path := range paths {
-		tag, err := tagging(root, path, !fastly)
+		tag, err := tagging(root, path, !runFastlyOption)
 		if err != nil {
 			return Commit{}, err
 		}
 		tags = append(tags, tag)
 	}
-	if fastly {
+	if runFastlyOption {
 		latestCommit, err := SelfRepo().LoadLatestCommit()
 		if err != nil {
 			return Commit{}, err
