@@ -20,7 +20,7 @@ type S3Op struct {
 	loadLines           func(region string, bucket string, path string) ([]string, error)
 	sendBlobs           func(region string, bucket string, paths, names []string) error
 	receiveBlobs        func(region string, bucket string, paths, names []string) error
-	receiveBlobsRequest func(region string, bucket string, names []string, restoreId string, validDays int32) (namesRequested []string, err error)
+	receiveBlobsRequest func(region string, bucket string, names []string, validDays int32) (namesRequested []string, err error)
 }
 
 var s3Op *S3Op
@@ -146,7 +146,7 @@ func (bucketClient S3BucketClient) putFile2deepArchive(key, localPath string) er
 	return err
 }
 
-func (bucketClient S3BucketClient) restoreRequest(key string, prefix string, validDays int32) error {
+func (bucketClient S3BucketClient) restoreRequest(key string, validDays int32) error {
 	_, err := bucketClient.S3client.RestoreObject(
 		context.TODO(),
 		&s3.RestoreObjectInput{
@@ -213,9 +213,9 @@ func init() {
 			}
 			return nil
 		},
-		receiveBlobsRequest: func(region string, bucket string, names []string, restoreId string, validDays int32) (namesRequested []string, err error) {
+		receiveBlobsRequest: func(region string, bucket string, names []string, validDays int32) (namesRequested []string, err error) {
 			for i, name := range names {
-				err := client(region, bucket).restoreRequest(name, restoreId, validDays)
+				err := client(region, bucket).restoreRequest(name, validDays)
 				if err != nil {
 					return names[:i], err
 				}
