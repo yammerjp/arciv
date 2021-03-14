@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"os"
+	"strconv"
 )
 
 var (
@@ -62,12 +63,21 @@ func s3lowaccessAction(args []string) error {
 		}
 		return s3Op.writeLines(args[1], args[2], args[3], lines)
 	}
+	if len(args) == 6 && args[0] == "restore" {
+		validDays64, err := strconv.ParseInt(args[5], 10, 32)
+		if err != nil {
+			return err
+		}
+		_, err = s3Op.receiveBlobsRequest(args[1], args[2], []string{args[3]}, args[4], int32(validDays64))
+		return err
+	}
 	fmt.Println("Usage:")
 	fmt.Println("  arciv s3lowaccess list <region> <bucket> <key-prefix>")
-	fmt.Println("  arciv s3lowaccess load <region> <bucket> <key>")
+	fmt.Println("  arciv s3lowaccess load <region> <bucket> <key> # write to stdout")
 	fmt.Println("  arciv s3lowaccess download <region> <bucket> <key> <write-path>")
 	fmt.Println("  arciv s3lowaccess upload <region> <bucket> <key> <read-path> # to deep archive")
-	fmt.Println("  arciv s3lowaccess write <region> <bucket> <key> (read from stdin)")
+	fmt.Println("  arciv s3lowaccess write <region> <bucket> <key> # read from stdin")
+	fmt.Println("  arciv s3lowaccess restore <region> <bucket> <key> <restore-prefix> <valid-days> # restore from deep archive")
 	return nil
 }
 

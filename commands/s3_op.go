@@ -15,12 +15,12 @@ import (
 )
 
 type S3Op struct {
-	findFilePaths func(region string, bucket string, root string) (relativePaths []string, err error)
-	writeLines    func(region string, bucket string, path string, lines []string) error
-	loadLines     func(region string, bucket string, path string) ([]string, error)
-	sendBlobs     func(region string, bucket string, paths, names []string) error
-	receiveBlobs  func(region string, bucket string, paths, names []string) error
-	// receiveBlobsRequest func(region string, bucket string, names []string, validDays int) (restoreNames []string, err error)
+	findFilePaths       func(region string, bucket string, root string) (relativePaths []string, err error)
+	writeLines          func(region string, bucket string, path string, lines []string) error
+	loadLines           func(region string, bucket string, path string) ([]string, error)
+	sendBlobs           func(region string, bucket string, paths, names []string) error
+	receiveBlobs        func(region string, bucket string, paths, names []string) error
+	receiveBlobsRequest func(region string, bucket string, names []string, restoreId string, validDays int32) (namesRequested []string, err error)
 }
 
 var s3Op *S3Op
@@ -84,6 +84,7 @@ func (bucketClient S3BucketClient) getLines(key string) (lines []string, err err
 	if err != nil {
 		return []string{}, err
 	}
+	defer got.Body.Close()
 	scanner := bufio.NewScanner(got.Body)
 	scanner.Split(bufio.ScanLines)
 	for scanner.Scan() {
@@ -103,6 +104,7 @@ func (bucketClient S3BucketClient) getFile(key, localPath string) error {
 	if err != nil {
 		return err
 	}
+	defer got.Body.Close()
 	file, err := os.Create(localPath)
 	if err != nil {
 		return err
@@ -144,29 +146,22 @@ func (bucketClient S3BucketClient) putFile2deepArchive(key, localPath string) er
 	return err
 }
 
-/*
-func (bucketClient S3BucketClient) restoreRequest(key string, restoreKeyRequest string, validDays int32) (restoreKey string, err error) {
-	got, err := bucketClient.S3client.RestoreObject(
+func (bucketClient S3BucketClient) restoreRequest(key string, prefix string, validDays int32) error {
+	_, err := bucketClient.S3client.RestoreObject(
 		context.TODO(),
 		&s3.RestoreObjectInput{
 			Bucket: &bucketClient.BucketName,
 			Key:    &key,
 			RestoreRequest: &types.RestoreRequest{
 				Days: validDays,
-				Tier: types.TierBulk,
-				OutputLocation: &types.OutputLocation{
-					S3: &types.S3Location{
-						BucketName: &restoreKeyRequest,
-					},
+				GlacierJobParameters: &types.GlacierJobParameters{
+					Tier: "Bulk",
 				},
 			},
 		},
 	)
-	if err != nil {
-		return "", err
-	}
-	return *got.RestoreOutputPath, nil
-}*/
+	return err
+}
 
 func init() {
 	s3Op = &S3Op{
@@ -214,17 +209,14 @@ func init() {
 			}
 			return nil
 		},
-		/*
-			receiveBlobsRequest: func(region string, bucket string, names []string, validDays int) (restoreNames []string, err error) {
-				for _, name := range names {
-					restoreName, err := client(string, bucket).restoreRequest(name)
-					if err != nil {
-						return restoreNames, err
-					}
-					restoreNames = append(restoreNames, restoreName)
+		receiveBlobsRequest: func(region string, bucket string, names []string, restoreId string, validDays int32) (namesRequested []string, err error) {
+			for i, name := range names {
+				err := client(region, bucket).restoreRequest(name, restoreId, validDays)
+				if err != nil {
+					return names[:i], err
 				}
-				return restoreNames, nil
-			},
-		*/
+			}
+			return names, nil
+		},
 	}
 }
