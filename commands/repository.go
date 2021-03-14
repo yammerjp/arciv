@@ -20,7 +20,6 @@ type RepositoryLocation interface {
 	findFilePaths(string) ([]string, error)
 	SendLocalBlobs([]Tag) error
 	ReceiveRemoteBlobs([]Tag) error
-	Init() error
 }
 
 func (repository Repository) String() string {
