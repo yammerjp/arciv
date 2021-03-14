@@ -1,9 +1,5 @@
 package commands
 
-import (
-	"errors"
-)
-
 type RepositoryLocationS3 struct {
 	BucketName string
 	RegionName string
@@ -35,16 +31,25 @@ func (r RepositoryLocationS3) SendLocalBlobs(tags []Tag) (err error) {
 	return s3Op.sendBlobs(r.RegionName, r.BucketName, fromPaths, blobNames)
 }
 
-func (r RepositoryLocationS3) ReceiveRemoteBlobs(tags []Tag) (err error) {
-	// FIXME: receive restored files from deep archive
-	return errors.New("Download blobs from AWS S3 is not implemented yet...\n Please download from Web console and place the files into .arciv/blob/")
-	/*
-		var toPaths []string
-		var blobNames []string
-		for _, tag := range tags {
-			toPaths = append(toPaths, repository.Path+"/.arciv/blob/"+tag.Hash.String())
-			blobNames = append(blobNames, tag.Hash.String())
+func (r RepositoryLocationS3) ReceiveRemoteBlobsRequest(tags []Tag) (keysRequested []string, err error) {
+	var keys []string
+	for _, tag := range tags {
+		key := ".arciv/blob/" + tag.Hash.String()
+		if !isIncluded(keys, key) {
+			keys = append(keys, key)
 		}
-		return s3Op.receiveBlobs(r.RegionName, r.BucketName, toPaths, blobNames)
-	*/
+	}
+	return s3Op.receiveBlobsRequest(r.RegionName, r.BucketName, keys, 3)
+}
+
+func (r RepositoryLocationS3) ReceiveRemoteBlobs(tags []Tag) (err error) {
+	var toPaths []string
+	var keys []string
+	base := fileOp.rootDir() + "/.arciv/blob/"
+	for _, tag := range tags {
+		blob := tag.Hash.String()
+		toPaths = append(toPaths, base+blob)
+		keys = append(keys, ".arciv/blob/"+blob)
+	}
+	return s3Op.receiveBlobs(r.RegionName, r.BucketName, toPaths, keys)
 }

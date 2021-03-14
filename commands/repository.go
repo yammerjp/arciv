@@ -296,6 +296,14 @@ func (repository Repository) SendLocalBlobs(tags []Tag) (err error) {
 	return repository.Location.SendLocalBlobs(tags)
 }
 
+func (r Repository) ReceiveRemoteBlobsRequest(tags []Tag) (keysRequested []string, err error) {
+	repositoryLocationS3, ok := r.Location.(RepositoryLocationS3)
+	if !ok {
+		return []string{}, errors.New("Repository.ReceiveRemoteBlobsRequest() is not succeeded with repository s3")
+	}
+	return repositoryLocationS3.ReceiveRemoteBlobsRequest(tags)
+}
+
 // receive to .arciv/blob
 func (repository Repository) ReceiveRemoteBlobs(tags []Tag) (err error) {
 	return repository.Location.ReceiveRemoteBlobs(tags)
