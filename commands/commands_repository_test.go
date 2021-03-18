@@ -199,6 +199,36 @@ func TestCommandsRepository(t *testing.T) {
 		if err != nil {
 			t.Errorf("repositoryActionAdd([]string{\"name:repo-new\", \"type:file\", \"path:path-new\"}) return an error \"%s\", want nil", err)
 		}
+
+		s3Op = &S3Op{
+			findFilePaths: func(region string, bucket string, root string) (relativePaths []string, err error) {
+				if region != "s3-region" || bucket != "s3-bucket" || root != ".arciv" {
+					t.Errorf("s3Op.findFilePaths() is called with unknown arguments: %s, %s, %s", region, bucket, root)
+				}
+				return []string{"repositories", "timeline", "timestamps"}, nil
+			},
+		}
+		fileOp = &FileOp{
+			loadLines: loadLines,
+			rootDir:   rootDir,
+			writeLines: func(path string, lines []string) error {
+				if path != "root/.arciv/repositories" {
+					t.Errorf("fileOp.writeLines is called with unknown path %s", path)
+				}
+				if len(lines) != 3 ||
+					lines[0] != "name:repo-relative type:file path:path-relative" ||
+					lines[1] != "name:repo-absolute type:file path:/path-absolute" ||
+					lines[2] != "name:repo-s3-new type:s3 region:s3-region bucket:s3-bucket" {
+					t.Errorf("fileOp.writeLines is called with unkwnown lines %s", lines)
+				}
+				return nil
+			},
+		}
+
+		err = repositoryActionAdd([]string{"type:s3", "name:repo-s3-new", "region:s3-region", "bucket:s3-bucket"})
+		if err != nil {
+			t.Errorf("repositoryActionAdd([]string{\"type:s3\", \"name:repo-s3-new\", \"region:s3-region\", \"bucket:s3-bucket\"}) return an error \"%s\", want nil", err)
+		}
 	})
 
 	// func repositoryActionRemove(name string) error
