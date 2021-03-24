@@ -50,6 +50,7 @@ func init() {
 
 func restoreAction() (err error) {
 	if RunningFromRequestOption != "" {
+    // Error occures if commitAliasOption, validDaysStrOption, repositoryNameOption or requestOption not is empty.
 		return restoreActionFromRequested(RunningFromRequestOption)
 	}
 
@@ -63,6 +64,7 @@ func restoreAction() (err error) {
 	if requestOption {
 		return restoreActionRequest()
 	}
+  // Error occures if validDaysStrOption not is empty.
 	return restoreActionImmediately()
 }
 
