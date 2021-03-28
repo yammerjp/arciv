@@ -31,7 +31,7 @@ func (r RepositoryLocationS3) SendLocalBlobs(tags []Tag) (err error) {
 	var blobNames []string
 	for _, tag := range tags {
 		fromPaths = append(fromPaths, fileOp.rootDir()+"/"+tag.Path)
-		blobNames = append(blobNames, tag.Hash.String())
+		blobNames = append(blobNames, ".arciv/blob/"+tag.Hash.String())
 	}
 	return s3Op.sendBlobs(r.RegionName, r.BucketName, fromPaths, blobNames)
 }
