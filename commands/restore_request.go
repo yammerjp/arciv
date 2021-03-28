@@ -61,7 +61,7 @@ func strs2restoreRequest(lines []string) (RestoreRequest, error) {
 	}
 
 	// line 3
-	if !strings.HasPrefix(lines[3], "#commit:") || len(lines[3]) != len("#commit:")+64 {
+	if !strings.HasPrefix(lines[3], "#commit:") || len(lines[3]) != len("#commit:")+8+1+64 {
 		return RestoreRequest{}, errors.New("The line 3 is invalid syntax")
 	}
 	commit, err := repo.LoadCommit(lines[3][len("#commit:"):])
