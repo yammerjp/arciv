@@ -179,7 +179,7 @@ func downloadAndReplace(remoteRepo Repository, localCommit, remoteCommit Commit)
 		if err != nil {
 			return err
 		}
-		if localCommit.Id[9:] != localLatestCommitId[9:] {
+		if localCommit.Id[9:] != localLatestCommitId[9:] && !dryRunningOption {
 			return errors.New("Directory structure is not saved with latest commit")
 		}
 	}
