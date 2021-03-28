@@ -365,7 +365,7 @@ func (r Repository) LoadRestoreRequest(restoreRequestAlias string) (restoreReque
 }
 
 func (r Repository) WriteRestoreRequest(restoreRequestId string, restoreRequest RestoreRequest) error {
-	return r.Location.writeLines(".arciv/"+restoreRequestId, restoreRequest.Strings())
+	return r.Location.writeLines(".arciv/restore-request/"+restoreRequestId, restoreRequest.Strings())
 }
 
 func SelfRepo() Repository {
