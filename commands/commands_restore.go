@@ -50,7 +50,7 @@ func init() {
 
 func restoreAction() (err error) {
 	if RunningFromRequestOption != "" {
-    // Error occures if commitAliasOption, validDaysStrOption, repositoryNameOption or requestOption not is empty.
+		// Error occures if commitAliasOption, validDaysStrOption, repositoryNameOption or requestOption not is empty.
 		return restoreActionFromRequested(RunningFromRequestOption)
 	}
 
@@ -64,7 +64,7 @@ func restoreAction() (err error) {
 	if requestOption {
 		return restoreActionRequest()
 	}
-  // Error occures if validDaysStrOption not is empty.
+	// Error occures if validDaysStrOption not is empty.
 	return restoreActionImmediately()
 }
 
@@ -118,6 +118,15 @@ func restoreActionRequest() (err error) {
 		message("Restore request is unnecessary. You can excute restore immediately.")
 		return nil
 	}
+
+	if dryRunningOption {
+		message("Show requesting blobs if you excute 'restore --request'.")
+		for _, tag := range blobsToReceive {
+			messageStdin("request: " + tag.Hash.String() + ", will locate to: " + tag.Path)
+		}
+		return nil
+	}
+
 	blobs, err := remoteRepo.ReceiveRemoteBlobsRequest(blobsToReceive, validDays)
 	if err != nil {
 		return err
