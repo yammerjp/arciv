@@ -194,7 +194,7 @@ func init() {
 				if err != nil {
 					return err
 				}
-        message("Uploaded: " + path + " (file) -> " + names[i] + " (s3)")
+				message("Uploaded: " + path + " (file) -> " + names[i] + " (s3)")
 			}
 			return nil
 		},
@@ -211,7 +211,7 @@ func init() {
 				if err != nil {
 					return err
 				}
-        message("Downloaded: " + names[i] + " (s3) -> " + path + " (file)")
+				message("Downloaded: " + names[i] + " (s3) -> " + path + " (file)")
 			}
 			return nil
 		},

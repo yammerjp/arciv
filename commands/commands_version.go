@@ -1,7 +1,7 @@
 package commands
 
 import (
-  "fmt"
+	"fmt"
 	"github.com/spf13/cobra"
 )
 
@@ -9,13 +9,13 @@ const versionStr = "0.0.1"
 
 var (
 	versionCmd = &cobra.Command{
-		Use:   "version",
-		Run:   func(_ *cobra.Command, _ []string) {
-      fmt.Println(versionStr)
-    },
+		Use: "version",
+		Run: func(_ *cobra.Command, _ []string) {
+			fmt.Println(versionStr)
+		},
 		Short: "Print binary version",
-		Long: "Print binary version",
-		Args: cobra.NoArgs,
+		Long:  "Print binary version",
+		Args:  cobra.NoArgs,
 	}
 )
 
