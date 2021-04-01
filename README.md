@@ -20,6 +20,76 @@ arcivは指定したディレクトリ (以下リポジトリルートと呼ぶ)
 
 ## Demo
 
+```sh
+# バージョン管理・バックアップしたいディレクトリがあるとします。
+$ cd ~/important-data
+$ echo "IMPORTANT STRING" > message.txt
+
+# まずリポジトリを初期化します。
+$ arciv init
+
+# バックアップ用の他リポジトリ (今回はディレクトリ) を指定します。
+$ arciv repository add type:file name:local-disk path:/media/disk0/backup-important-data
+
+# ファイル構成を記録してバックアップします。
+$ arciv store --repository local-disk
+
+# バックアップが行われたことを確認します。
+$ arciv log --repository local-disk
+
+# リポジトリに変更を加えます。
+$ rm message.txt
+
+# リポジトリに変更が加わったことを確認します。
+$ arciv status
+
+# リポジトリに加えた変更を、バックアップから復元することで修正します。
+# (先程の store 時の commit-id が 60dddd-0000000000000000000000000000000000000000000000000000000000000000 だったとする。)
+$ arciv restore --repository local-disk --commit 60ddd
+$ ls
+```
+
+## VS. 
+
+gitと比較して
+
+### good
+
+#### 構造が単純
+
+- listはsha256sumと同じ構造
+- 頑張ればシェルスクリプトでリポジトリを復元できるほど簡単
+
+#### .git以下に複製をもたない
+
+巨大なバイナリを2重に保存するにはストレージが無駄
+
+#### アップロードしたファイルが上書き/変更されない
+
+- 管理対象のファイルを書き換え/削除する以外にblobが削減されることはない ... git は gc などをするとオブジェクトがなくなることがある S3 Glacierには適さない構造
+- listとblobがわかれている
+- listは削除や書き換えが発生せず必ず新たなファイルを追加する
+- blobも上書きが発生しない
+- (リポジトリの中で１つしか存在しない.arciv/timeline, .arciv/timestamps, .arciv/repositories は上書きされます。 しかしながら、.arciv/blob以下以外はGlacierに保存されないので最低保存期間の影響はありません。 また通常は.arciv/repositoriesは転送先のリポジトリでは利用されません)
+
+### bad
+
+#### 圧縮しない
+
+テキストファイルには向かない
+
+#### ローカルに複製を保存しない
+
+ローカルだけで書き戻しは出来ない
+
+## Requirement
+
+## Usage
+
+### 認証
+
+AWS S3上にバックアップを作成したい場合は、S3バケットの作成、IAMロールの作成、認証情報の登録が必要になります。
+
 ### 初期化 (init)
 
 ```sh
@@ -154,46 +224,34 @@ $ arciv restore --run-requested <restore-request-id>
 # restore-request-id を忘れてしまったら `$ls .arciv/restore-request` で確認できます。restore-request-idは新しいほど辞書順で並べたときにあとになるようにIDが生成されています。
 ```
 
-### stash
 ### status
-### unstash
-### s3lowaccess
+
+前回のcommitから変更・削除・追加があったファイル名を表示します。
+
 ### diff
+
+2つのcommitの間で変更・削除・追加があったファイル名を表示します。
+
 ### version
 
-## VS. 
+### stash
 
-gitと比較して
+__非推奨__
 
-### good
+低レベルなアクセスです。
+リポジトリ内のファイル構成を記録(commitを作成)し、ファイルの実体を.arciv/blobに退避します。
+### unstash
 
-- 構造が単純
-listはsha256sumと同じ構造
-頑張ればシェルスクリプトでリポジトリを復元できるほど簡単
+__非推奨__
 
-- .git以下に複製をもたない
-巨大なバイナリを2重に保存するにはストレージが無駄
+リポジトリ内のファイル構成をcommitから取得し、.arciv/blobを利用してファイルの実体を復元します。
 
-- アップロードしたファイルが上書き/変更されない
-管理対象のファイルを書き換え/削除する以外にblobが削減されることはない ... git は gc などをするとオブジェクトがなくなることがある S3 Glacierには適さない構造
-listとblobがわかれている
-listは削除や書き換えが発生せず必ず新たなファイルを追加する
-blobも上書きが発生しない
-(リポジトリの中で１つしか存在しない.arciv/timeline, .arciv/timestamps, .arciv/repositories は上書きされます。
-しかしながら、.arciv/blob以下意外はGlacierに保存されないので最低保存期間の影響はありません。
-また通常は.arciv/repositoriesや.arciv/timestamps??は転送先のリポジトリでは利用されません => 利用されてそう)
+### s3lowaccess
 
-### bad
+__非推奨__
 
-- 圧縮しない
-テキストファイルには向かない
+ファイル、region、bucket を指定して AWS S3と通信します。
 
-- ローカルに複製を保存しない
-ローカルだけで書き戻しは出来ない
-
-## Requirement
-
-## Usage
 
 ## Install
 
@@ -209,13 +267,15 @@ $ mv arciv /usr/local/bin/
 ### .arciv directory
 
 arcivではバージョン管理に必要な情報や他のリポジトリの情報をリポジトリ直下の`.arciv`ディレクトリに格納しています。
+本章では、この`.arciv`ディレクトリ配下に保存されるファイルについて説明します。
 
-`.arciv/blob/`
-`.arciv/list/`
-`.arciv/restore-request/`
-`.arciv/repositories`
-`.arciv/timeline`
-`.arciv/timestamps`
+- `.arciv/blob/` 他リポジトリからダウンロードしたり、一時的に退避したりしたファイルの実体を保存するディレクトリです。バックアップ先のリポジトリでは原則としてファイルの実体はこのディレクトリの中のみに保存され、リポジトリの中の`.arciv`ディレクトリ以外は空となります。
+- `.arciv/list/` 各commit-idをファイル名として、そのcommitに含まれるファイルのリポジトリルートからの相対パスとファイルのsha256を記録したものです。場合によっては過去のcommitとの差分のみを記録していることがあります。
+- `.arciv/restore-request/` AWS S3 Glaclier からアーカイブ済みファイルをダウンロードできる状態にするようリクエストしたときに、そのリクエストIDをファイル名としたリクエスト情報を記録するファイルを含むディレクトリです。
+各ファイルに含まれるのは`#`で始まるメタ情報の他に、各行が復元をリクエストしたファイルの実体のsha256が記録されています。
+- `.arciv/repositories` `arciv repository add`で登録したリポジトリを記録するファイルです。selfは含みません。
+- `.arciv/timeline`commit-idのリストを保持するファイルです。
+- `.arciv/timestamps`commit作成時に使える--fastオプションを実行するための、各ファイルのタイムスタンプ情報をキャッシュするファイルです。
 
 ### aws s3 bucket
 
