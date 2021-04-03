@@ -14,6 +14,8 @@ var (
 	}
 )
 
+var debugOption bool = false
+
 func statusCommand(cmd *cobra.Command, args []string) {
 	if err := statusAction(); err != nil {
 		Exit(err, 1)
@@ -24,6 +26,7 @@ func init() {
 	RootCmd.AddCommand(statusCmd)
 	statusCmd.Flags().BoolVarP(&simplyPrinting, "simple", "m", false, "Print simply")
 	statusCmd.Flags().BoolVarP(&runFastlyOption, "fast", "s", false, "Check fastly with checking timestamp, without checking file hash")
+	statusCmd.Flags().BoolVarP(&debugOption, "debug", "b", false, "Debug print")
 }
 
 func statusAction() (err error) {

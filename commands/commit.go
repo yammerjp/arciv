@@ -92,6 +92,9 @@ func tagging(root, relativePath string, withHashing bool) (tag Tag, err error) {
 		if err != nil {
 			return Tag{}, err
 		}
+		if debugOption {
+			message("(sha256) " + hash.String() + " " + path)
+		}
 	}
 
 	//timestamp

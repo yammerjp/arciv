@@ -25,6 +25,7 @@ func init() {
 	RootCmd.AddCommand(storeCmd)
 	storeCmd.Flags().BoolVarP(&runFastlyOption, "fast", "s", false, "Check fastly with checking timestamp, without checking file hash")
 	storeCmd.Flags().StringVarP(&repositoryNameOption, "repository", "r", "", "repository name")
+	storeCmd.Flags().BoolVarP(&debugOption, "debug", "b", false, "Debug print")
 }
 
 func storeAction(repoName string) (err error) {

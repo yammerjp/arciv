@@ -46,6 +46,7 @@ func init() {
 	restoreCmd.Flags().StringVarP(&validDaysStrOption, "valid-days", "v", "3", "valid days of restored archive files")
 	//restoreCmd.Flags().BoolVarP(&RunningFromLatestRequestOption, "run-latest-requested", "l", false, "Download and place files that was requested latestly")
 	restoreCmd.Flags().StringVarP(&RunningFromRequestOption, "run-requested", "e", "", "Download and place files from restore-request")
+	restoreCmd.Flags().BoolVarP(&debugOption, "debug", "b", false, "Debug print")
 }
 
 func restoreAction() (err error) {

@@ -94,4 +94,5 @@ func unstashTags(tags []Tag) (err error) {
 
 func init() {
 	RootCmd.AddCommand(unstashCmd)
+	unstashCmd.Flags().BoolVarP(&debugOption, "debug", "b", false, "Debug print")
 }

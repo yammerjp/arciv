@@ -70,4 +70,5 @@ func stashTags(tags []Tag) (err error) {
 func init() {
 	RootCmd.AddCommand(stashCmd)
 	stashCmd.Flags().BoolVarP(&runFastlyOption, "fast", "s", false, "Check fastly with checking timestamp, without checking file hash")
+	stashCmd.Flags().BoolVarP(&debugOption, "debug", "b", false, "Debug print")
 }
