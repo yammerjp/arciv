@@ -10,6 +10,7 @@ import (
 	"strings"
 	//  "github.com/aws/aws-sdk-go-v2"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
@@ -134,14 +135,16 @@ func (bucketClient S3BucketClient) putFile2deepArchive(key, localPath string) er
 		return err
 	}
 	defer f.Close()
-	_, err = bucketClient.S3client.PutObject(
-		context.TODO(),
-		&s3.PutObjectInput{
-			Bucket:       &bucketClient.BucketName,
-			Key:          &key,
-			Body:         f,
-			StorageClass: types.StorageClassDeepArchive,
-		},
+	uploader := manager.NewUploader(bucketClient.S3client, func(u *manager.Uploader) {
+		u.PartSize = 100 * 1024 * 1024 // 100MB par part
+		u.Concurrency = 10
+	})
+	_, err = uploader.Upload(context.TODO(), &s3.PutObjectInput{
+		Bucket:       &bucketClient.BucketName,
+		Key:          &key,
+		Body:         f,
+		StorageClass: types.StorageClassDeepArchive,
+	},
 	)
 	return err
 }
