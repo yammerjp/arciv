@@ -5,11 +5,11 @@ Sorry, the README is written in japanese only now...
 
 ___このREADMEは書きかけです。___
 
-___arciv は現在ベータ版です。破壊的変更が加わり、互換性を維持しないことで今後のバージョンのバイナリを利用するとリポジトリが読めなくなる可能性があります。___
+___arciv は現在アルファ版です。破壊的変更が加わり、互換性を維持しないことで今後のバージョンのバイナリを利用するとリポジトリが読めなくなる可能性があります。___
 
 arcivは大容量のバイナリファイル向けバージョン管理システムです。
 複数の写真や動画を始めとするファイルを長期間に渡って保存する場合に、バージョン管理をしながら別のディスクやAWS S3に保存することが出来ます。
-特に AWS S3 Glacier に保存することを前提としており、ファイルの実態が変化しなければディレクトリ構成やファイル名の変更を行っても多重に課金されることを避けることが出来ます。
+特に AWS S3 Glacier に保存することを前提としており、ファイルの実体が変化しなければディレクトリ構成やファイル名の変更を行っても多重の課金を避けることが出来ます。
 
 ## Description
 
@@ -42,14 +42,14 @@ $ rm message.txt
 $ arciv status
 
 # リポジトリに加えた変更を、バックアップから復元することで修正します。
-# (先程の store 時の commit-id が 60dddd-0000000000000000000000000000000000000000000000000000000000000000 であったとする。)
-$ arciv restore --repository local-disk --commit 60ddd --force
+# (先程の store 時の commit-id が 60dddd-... であったとする。)
+$ arciv restore --repository local-disk --commit 60dddd --force
 $ ls
 ```
 
 ## VS. 
 
-Version Control System として普及する git と比較して次のような特徴があります。
+Version Control System として普及する git と比較して以下のような特徴があります。
 
 ### Good points
 
@@ -92,11 +92,62 @@ good に書いた「.git 以下に複製を持たない」ことの裏返しで�
 
 ## Requirement
 
+macOS / Linux を前提としています。
+現状はバイナリを配布しておらず、Golang のビルド環境も必要になります。
+
+## Install
+
+```sh
+$ git clone https://github.com/basd4g/arciv.git
+$ cd arciv
+$ go build
+$ mv arciv /usr/local/bin/
+```
+
 ## Usage
 
-### 認証
+### (AWS S3 にバックアップする場合) AWS側の準備と認証情報の登録
 
 AWS S3 上にバックアップを作成したい場合は、S3 バケットの作成、IAM ロールの作成、認証情報の登録が必要になります。
+
+1. S3バケットを作成します。(ここでは `your-bucket-name` という名前のバケットであるとします。)
+1. バケットのパブリックアクセスは禁止します。
+1. ライフサイクルルールとして、マルチパートアップロードに失敗したファイルを3日後などに削除するルールを設定します。
+1. 同一の AWS アカウントで、IAM ロールを作成します。
+1. バケットへの読み書きなどの権限を持つポリシーを IAM ロールに付与します。IAM ロールに付加するポリシーは次のとおりです。(バケット名はご自身のものに置き換えてください)
+1. 作成した IAM からアクセスできるようにローカルに認証情報を登録します。まず、IAM ロールの アクセスキーを作成し、アクセスキーID (ここでは`your-access-key-id`とします) と シークレット (ここでは`your-access-key-secret`とします) をメモし、`~/.aws/credentials`に記録します。
+
+IAM ロールに付加するポリシー
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:RestoreObject",
+                "s3:ListBucket",
+                "s3:DeleteObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::your-bucket-name/*",
+                "arn:aws:s3:::your-bucket-name"
+            ]
+        }
+    ]
+}
+```
+
+`~/.aws/credentials`
+```
+[default]
+aws_access_key_id = your-access-key-id
+aws_secret_access_key = your-access-key-secret
+```
 
 ### 初期化 (init)
 
@@ -108,6 +159,7 @@ $ arciv init
 ```
 
 ### 他リポジトリの登録/閲覧/削除 (repository / repository add / repository remove)
+
 ```sh
 $ arciv repository add type:file name:backup-repo path:/path/to/backup/repository
 # 又は
@@ -158,9 +210,78 @@ $ arciv log --repository your-repository-name
 $ arciv log --commit <commit-id>
 ```
 
-#### 補足,コラム: commit-idの省略
+### バックアップからの復元 (restore)
 
-ここで指定するcommit-idは先程の`arciv log`で確認された各行の0-9,a-f, - で構成された73文字の文字列のことです。
+リポジトリになにか手を加えた後、バックアップから復元してみましょう。
+
+```sh
+# リポジトリ内のファイルに何らかの変更を加えてみましょう
+$ vi change-any-files-1
+$ rm change-any-files-2
+
+# 再度バックアップしてみましょう
+$ arciv store --repository your-repository-name
+
+# 変更を加える前に書き戻してみましょう
+
+## type:file の場合
+$ arciv restore --repository your-repository-name --commit commit-id
+
+## type:s3 の場合
+# AWS S3 Glacier Deep Archive を利用しているため、すぐにファイルの実体をダウンロードできません。
+# 一度AWS S3内でのアーカイブからの復元(ファイルをダウンロードできる状態にしてもらう) をリクエストし、48時間未満での完了を待ってから実体のダウンロードとリポジトリの復元を実行します。このように2段階での復元操作が必要となります。
+
+# まず AWS S3 に アーカイブからの復元をリクエスト
+$ arciv restore --request --repository your-repository-name --commit commit-id
+# --valid-days --force --fast --dry-run
+# コマンドを実行するとrestore-request-idが表示されるので、メモしておきます。
+
+# 48時間程度待ってAWS S3内でのアーカイブからの復元が完了したら、実体のダウンロードとリポジトリの復元を実行
+$ arciv restore --run-requested <restore-request-id>
+# restore-request-id を忘れてしまったら `$ls .arciv/restore-request` で確認できます。restore-request-idは新しいほど辞書順で並べたときにあとになるようにIDが生成されています。
+```
+
+### 現在の自身のリポジトリの状態を確認 (status)
+
+前回のcommitから変更・削除・追加があったファイル名を表示します。
+
+```sh
+$ arciv status
+```
+
+### Commit間の差分を確認 (diff)
+
+2つのcommitの間で変更・削除・追加があったファイル名を表示します。
+
+```sh
+$ arciv diff <commit-id> <commit-id>
+```
+
+### Versionの確認 (version)
+
+```sh
+$ arciv version
+```
+
+### 非推奨: ファイルを退避(stash)
+
+低レベルなアクセスです。
+リポジトリ内のファイル構成を記録(commitを作成)し、ファイルの実体を.arciv/blobに退避します。
+
+### 非推奨: 退避されたファイルの復元 (unstash)
+
+低レベルなアクセスです。
+リポジトリ内のファイル構成をcommitから取得し、.arciv/blobを利用してファイルの実体を復元します。
+
+### 非推奨: AWS S3 との通信 (s3lowaccess)
+
+低レベルなアクセスです。
+ファイル、region、bucket を指定して AWS S3と通信します。
+開発時のデバッグに使います。
+
+### 補足: commit-idの省略
+
+arciv コマンドの引数で指定するcommit-idは先程の`arciv log`で確認された各行の0-9,a-f, - で構成された73文字の文字列のことです。
 73文字全体を指定してもいいですし、先頭かハイフンより後ろから始まる数文字のみを指定しても構いません。
 ただし、省略した指定がリポジトリ内の他のcommit-idをも指し示すことがありえるときは使えません。
 
@@ -200,74 +321,6 @@ $ arciv log --commit <commit-id>
 
 2つのcommit-idのうちどちらを指しているかわからないからです。
 
-
-#### リポジトリになにか手を加えた後、バックアップから復元してみましょう。
-
-```sh
-# リポジトリ内のファイルに何らかの変更を加えてみましょう
-$ vi change-any-files-1
-$ rm change-any-files-2
-
-# 再度バックアップしてみましょう
-$ arciv store --repository your-repository-name
-
-# 変更を加える前に書き戻してみましょう
-
-## type:file の場合
-$ arciv restore --repository your-repository-name --commit commit-id
-
-## type:s3 の場合
-# AWS S3 Glacier Deep Archive を利用しているため、すぐにファイルの実体をダウンロードできません。
-# 一度AWS S3内でのアーカイブからの復元(ファイルをダウンロードできる状態にしてもらう) をリクエストし、48時間未満での完了を待ってから実体のダウンロードとリポジトリの復元を実行します。このように2段階での復元操作が必要となります。
-
-# まず AWS S3 に アーカイブからの復元をリクエスト
-$ arciv restore --request --repository your-repository-name --commit commit-id
-# --valid-days --force --fast --dry-run
-# コマンドを実行するとrestore-request-idが表示されるので、メモしておきます。
-
-# 48時間程度待ってAWS S3内でのアーカイブからの復元が完了したら、実体のダウンロードとリポジトリの復元を実行
-$ arciv restore --run-requested <restore-request-id>
-# restore-request-id を忘れてしまったら `$ls .arciv/restore-request` で確認できます。restore-request-idは新しいほど辞書順で並べたときにあとになるようにIDが生成されています。
-```
-
-### status
-
-前回のcommitから変更・削除・追加があったファイル名を表示します。
-
-### diff
-
-2つのcommitの間で変更・削除・追加があったファイル名を表示します。
-
-### version
-
-### stash
-
-__非推奨__
-
-低レベルなアクセスです。
-リポジトリ内のファイル構成を記録(commitを作成)し、ファイルの実体を.arciv/blobに退避します。
-### unstash
-
-__非推奨__
-
-リポジトリ内のファイル構成をcommitから取得し、.arciv/blobを利用してファイルの実体を復元します。
-
-### s3lowaccess
-
-__非推奨__
-
-ファイル、region、bucket を指定して AWS S3と通信します。
-
-
-## Install
-
-```sh
-$ git clone https://github.com/basd4g/arciv.git
-$ arciv
-$ go build
-$ mv arciv /usr/local/bin/
-```
-
 ## Architecture
 
 ### .arciv directory
@@ -285,11 +338,13 @@ arcivではバージョン管理に必要な情報や他のリポジトリの情
 
 ### aws s3 bucket
 
-type:file でも type:s3 でも基本的には変わらず、ほかリポジトリには .arciv ディレクトリ以下のみに読み書きを行なうようになっています。
+type:file でも type:s3 でも基本的には変わらず、他リポジトリには .arciv ディレクトリ以下のみに読み書きを行なうようになっています。
 aws s3 bucket の場合は、ファイルの実体を保管している .arciv/blob/ 以下のファイルのみ、AWS S3 Glacier Deep Archive 階層に保管されます。
 
 
 ## Contribution
+
+歓迎します。
 
 ## TODO
 
@@ -298,6 +353,8 @@ aws s3 bucket の場合は、ファイルの実体を保管している .arciv/b
 - commit-id と restore-request-id の実施時刻をhuman readable に印字する機能の追加
 
 ## 用語集
+
+(未執筆)
 
 - Commit
 - list
