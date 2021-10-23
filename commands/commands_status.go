@@ -35,10 +35,18 @@ func statusAction() (err error) {
 		return err
 	}
 
+  if debugOption {
+    message("createCommitStructure() is finished")
+  }
+
 	latestCommit, err := SelfRepo().LoadLatestCommit()
 	if err != nil {
 		return err
 	}
+
+  if debugOption {
+    message("SelfRepo().LoadLatestCommit() is finished")
+  }
 
 	deleted, added := diffTags(latestCommit.Tags, nowCommit.Tags)
 	printDiffs(deleted, added)

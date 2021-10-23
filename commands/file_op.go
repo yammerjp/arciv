@@ -16,6 +16,9 @@ func findPaths(root string, includeFile bool, includeDir bool) (relativePaths []
 		if err != nil {
 			return err
 		}
+    if debugOption {
+      message("findPaths(): " + path)
+    }
 		isDir := info.IsDir()
 		if isDir && !includeDir || !isDir && !includeFile {
 			return nil

@@ -31,6 +31,9 @@ func createCommitStructure() (c Commit, err error) {
 	if err != nil {
 		return Commit{}, err
 	}
+  if debugOption {
+    message("fileOp.findFilePaths() is finished")
+  }
 	var tags []Tag
 	for _, path := range paths {
 		tag, err := tagging(root, path, !runFastlyOption)
